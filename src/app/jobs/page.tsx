@@ -1,44 +1,107 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+interface Job {
+  title: string;
+  company: string;
+  location: string;
+  snippet: string;
+  link: string;
+  salary: string;
+  source: string;
+}
+
+function formatSalary(salary: string): string {
+  return salary.replace(/[\d,]+/g, (match) =>
+    Number(match.replace(/,/g, "")).toLocaleString()
+  );
+}
 
 export default function JobsPage() {
+  const router = useRouter();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [keywords, setKeywords] = useState("");
+  const [location, setLocation] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function searchJobs(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const res = await fetch("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keywords, location }),
+    });
+    const data = await res.json();
+    setJobs(data.jobs || []);
+    setLoading(false);
+  }
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-6">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 20h20" />
-              <path d="M5 20V8.5L12 3l7 5.5V20" />
-              <path d="M9 20v-5h6v5" />
-              <path d="M10 9h4" />
-            </svg>
-          </div>
+    <main className="min-h-screen bg-white p-8">
+      <div className="mx-auto max-w-4xl">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Jobs</h1>
 
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
-            Under Construction
-          </h1>
-          <p className="text-sm text-gray-500 leading-relaxed mb-8 max-w-sm">
-            We&apos;re building something great. This page will be available soon - stay tuned!
-          </p>
-
-          <div className="flex gap-1.5 mb-8">
-            <div className="w-2 h-2 rounded-full bg-amber-400" />
-            <div className="w-2 h-2 rounded-full bg-amber-300" />
-            <div className="w-2 h-2 rounded-full bg-amber-200" />
-          </div>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+        <form onSubmit={searchJobs} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            placeholder="Keywords (e.g. developer)"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="text"
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            Go Home
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" />
-              <path d="M12 5l7 7-7 7" />
-            </svg>
-          </Link>
+            {loading ? "Searching..." : "Search"}
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          {jobs.map((job, i) => (
+            <div
+              key={i}
+              onClick={async () => {
+                const res = await fetch("/api/jobs/save", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(job),
+                });
+                const data = await res.json();
+                router.push(`/jobs/${data.slug}`);
+              }}
+              className="cursor-pointer rounded-md border border-gray-200 bg-white p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-medium text-blue-600">
+                  {job.title}
+                </span>
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+                  {job.source}
+                </span>
+              </div>
+              <p className="text-sm text-gray-700 mt-1">
+                {job.company} {job.location && `· ${job.location}`}
+              </p>
+              {job.salary && (
+                <p className="text-sm text-gray-500 mt-1">{formatSalary(job.salary)}</p>
+              )}
+              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                {job.snippet.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ")}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </main>
