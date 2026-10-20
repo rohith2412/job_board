@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Job Board",
   description: "Find your next opportunity",
   icons: {
-    icon: "/A8F7721A-244D-406A-913D-1566A3FA7D33_4_5005_c.jpeg",
+    icon: "/favicon.png",
   },
 };
 
