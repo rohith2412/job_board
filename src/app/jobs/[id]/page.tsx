@@ -198,14 +198,27 @@ function JobDetailContent() {
 
           <div className="h-px bg-gray-100" />
 
-          <div className="flex flex-col gap-6 p-6 bg-gray-50 rounded-2xl">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold text-gray-800 tracking-tight">About this role</h2>
-              <p className="text-base text-gray-500 leading-relaxed whitespace-pre-line">
-                {cleanSnippet(job.snippet)}
-              </p>
+          {isAuthenticated ? (
+            <div className="flex flex-col gap-6 p-6 bg-gray-50 rounded-2xl">
+              <div className="flex flex-col gap-4">
+                <h2 className="text-lg font-semibold text-gray-800 tracking-tight">About this role</h2>
+                <p className="text-base text-gray-500 leading-relaxed whitespace-pre-line">
+                  {cleanSnippet(job.snippet)}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative rounded-2xl overflow-hidden">
+              <div className="flex flex-col gap-6 p-6 bg-gray-50 blur-sm select-none pointer-events-none">
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-lg font-semibold text-gray-800 tracking-tight">About this role</h2>
+                  <p className="text-base text-gray-500 leading-relaxed whitespace-pre-line">
+                    {cleanSnippet(job.snippet)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="pb-24" />
 
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-4 z-50">
