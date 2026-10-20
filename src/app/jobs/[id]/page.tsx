@@ -46,6 +46,19 @@ export default function JobDetailPage() {
   );
 }
 
+const AVAILABLE_SLUGS = new Set([
+  "junior-software-engineer-at-policyme-lwtvywfi",
+  "software-engineer-at-policyme-uguirhva",
+  "senior-software-engineer-at-policyme-eww683sc",
+  "embedded-software-designer-at-kepler-communications-ovk42co8",
+  "software-engineering-intern-at-kepler-communications-74oy73e9",
+  "software-engineer-at-greenhouse-software-ngm889w3",
+  "senior-software-engineer-i-at-greenhouse-software-sa0kja8m",
+  "staff-ai-engineer-at-maple-rn2qgq6d",
+  "api-engineer-at-lever-hg5vaj0s",
+  "product-engineer-at-lever-blmo1lv6",
+]);
+
 function JobDetailContent() {
   const { status } = useSession();
   const params = useParams();
@@ -93,7 +106,7 @@ function JobDetailContent() {
 
   const isAuthenticated = status === "authenticated";
 
-  if (!job.featured) {
+  if (!AVAILABLE_SLUGS.has(slug)) {
     return (
       <main className="min-h-screen bg-white">
         <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
