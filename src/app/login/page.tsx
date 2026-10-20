@@ -38,7 +38,7 @@ export default function LoginPage() {
           Under Construction
         </h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
-          We&apos;re building something great. This page will be available soon — stay tuned!
+          We&apos;re building something great. This page will be available soon - stay tuned!
         </p>
 
         <div className="flex gap-1.5 mb-8">

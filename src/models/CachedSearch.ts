@@ -19,7 +19,7 @@ export interface ICachedSearch {
 const CachedSearchSchema = new Schema<ICachedSearch>(
   {
     key: { type: String, required: true, unique: true },
-    jobs: { type: [Schema.Types.Mixed], default: [] },
+    jobs: { type: Schema.Types.Mixed, default: [] },
   },
   { timestamps: true }
 );
