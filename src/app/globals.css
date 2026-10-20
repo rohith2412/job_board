@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-anaheim);
+}
+
+html,
+body {
+  background: #ffffff !important;
+  color: var(--foreground);
+  font-family: var(--font-anaheim), "Anaheim", sans-serif;
+}
+
+* {
+  font-family: inherit;
+}
