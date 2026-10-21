@@ -1,13 +1,43 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import SessionProvider from "@/components/SessionProvider";
+import RegionSelector from "@/components/RegionSelector";
+
+const REGION_LABELS: Record<string, string> = {
+  US: "United States",
+  CA: "Canada",
+  CH: "Switzerland",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  AU: "Australia",
+  IN: "India",
+  OTHER: "Other",
+};
 
 function ProfileContent() {
   const { data: session, status } = useSession();
+  const [region, setRegion] = useState<string | null>(null);
+  const [regionLoading, setRegionLoading] = useState(true);
 
-  if (status === "loading") {
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setRegionLoading(false);
+      return;
+    }
+    fetch("/api/user/region")
+      .then((r) => r.json())
+      .then((data) => {
+        setRegion(data.region || null);
+        setRegionLoading(false);
+      })
+      .catch(() => setRegionLoading(false));
+  }, [status]);
+
+  if (status === "loading" || regionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <p className="text-gray-400">Loading...</p>
@@ -57,6 +87,10 @@ function ProfileContent() {
     );
   }
 
+  if (!region) {
+    return <RegionSelector onSelect={(r) => setRegion(r)} />;
+  }
+
   const user = session.user;
 
   return (
@@ -81,6 +115,9 @@ function ProfileContent() {
                 {user?.name}
               </h1>
               <p className="text-sm text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {REGION_LABELS[region] || region}
+              </p>
             </div>
           </div>
 

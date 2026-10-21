@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   useSession,
   signIn,
   SessionProvider as NextAuthSessionProvider,
 } from "next-auth/react";
-import RegionSelector from "@/components/RegionSelector";
 
 function JobAuthContent({
   snippet,
@@ -17,24 +15,8 @@ function JobAuthContent({
 }) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
-  const [region, setRegion] = useState<string | null>(null);
-  const [regionLoading, setRegionLoading] = useState(true);
 
-  useEffect(() => {
-    if (status !== "authenticated") {
-      setRegionLoading(false);
-      return;
-    }
-    fetch("/api/user/region")
-      .then((r) => r.json())
-      .then((data) => {
-        setRegion(data.region || null);
-        setRegionLoading(false);
-      })
-      .catch(() => setRegionLoading(false));
-  }, [status]);
-
-  if (status === "loading" || regionLoading) {
+  if (status === "loading") {
     return (
       <>
         <div className="flex flex-col gap-6 p-6 bg-gray-50 rounded-2xl animate-pulse">
@@ -48,10 +30,6 @@ function JobAuthContent({
         <div className="pb-24" />
       </>
     );
-  }
-
-  if (isAuthenticated && !region) {
-    return <RegionSelector onSelect={(r) => setRegion(r)} />;
   }
 
   if (isAuthenticated) {

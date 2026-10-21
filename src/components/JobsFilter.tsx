@@ -4,7 +4,6 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
 import { SessionProvider, useSession, signIn } from "next-auth/react";
-import RegionSelector from "@/components/RegionSelector";
 
 interface Job {
   slug: string;
@@ -255,10 +254,8 @@ function JobsFilterInner({
   jobs: Job[];
   locations: string[];
 }) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const isSignedIn = !!session;
-  const [region, setRegion] = useState<string | null>(null);
-  const [regionLoading, setRegionLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
@@ -267,21 +264,6 @@ function JobsFilterInner({
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (status !== "authenticated") {
-      setRegionLoading(false);
-      return;
-    }
-    fetch("/api/user/region")
-      .then((r) => r.json())
-      .then((data) => {
-        setRegion(data.region || null);
-        setRegionLoading(false);
-      })
-      .catch(() => setRegionLoading(false));
-  }, [status]);
-
   useEffect(() => { setNow(Date.now()); }, []);
 
   const companies = useMemo(
@@ -323,10 +305,6 @@ function JobsFilterInner({
 
   const hasFilters = search || selectedLocation || selectedCompany || selectedType || remoteOnly || dateFilter;
   const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, search, dateFilter].filter(Boolean).length;
-
-  if (isSignedIn && !regionLoading && !region) {
-    return <RegionSelector onSelect={(r) => setRegion(r)} />;
-  }
 
   return (
     <>
