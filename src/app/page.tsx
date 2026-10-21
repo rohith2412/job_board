@@ -4,13 +4,13 @@ import { getAllFeaturedJobs } from "@/lib/data";
 import { slugifyCompany } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Reblet | Curated Software Engineering Jobs in Canada",
+  title: "Reblet | Curated Software Engineering Jobs in USA & Canada",
   description:
-    "Discover handpicked software engineering jobs at top Canadian tech companies. Browse roles by company, view salaries, and apply directly.",
+    "Discover handpicked software engineering jobs at top tech companies in the United States and Canada. Browse roles by company, view salaries, and apply directly.",
   openGraph: {
-    title: "Reblet | Curated Software Engineering Jobs in Canada",
+    title: "Reblet | Curated Software Engineering Jobs in USA & Canada",
     description:
-      "Discover handpicked software engineering jobs at top Canadian tech companies.",
+      "Discover handpicked software engineering jobs at top tech companies in the USA and Canada.",
     type: "website",
     url: "https://www.reblet.com",
     siteName: "Reblet",
@@ -36,11 +36,11 @@ export default async function Home() {
               <br />
               engineering jobs
               <br />
-              <span className="text-gray-400">in Canada</span>
+              <span className="text-gray-400">in USA & Canada</span>
             </h1>
             <p className="text-base text-gray-500 max-w-md">
-              Handpicked roles at companies that build real products. No spam, no
-              duplicates - just jobs worth applying to.
+              Handpicked roles at top companies across the US and Canada. No
+              spam, no duplicates - just jobs worth applying to.
             </p>
           </div>
 

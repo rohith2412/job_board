@@ -30,10 +30,10 @@ export async function generateMetadata({
 
   return {
     title: `${companyName} Jobs | Reblet`,
-    description: `Browse open software engineering positions at ${companyName}. View roles, salaries, and apply directly.`,
+    description: `Browse open software engineering positions at ${companyName} in the USA and Canada. View roles, salaries, and apply directly.`,
     openGraph: {
       title: `Jobs at ${companyName}`,
-      description: `Browse open software engineering positions at ${companyName}.`,
+      description: `Browse open software engineering positions at ${companyName} in the USA and Canada.`,
       type: "website",
       url: `https://www.reblet.com/companies/${slug}`,
       siteName: "Reblet",

@@ -4,13 +4,13 @@ import { getAllFeaturedJobs } from "@/lib/data";
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Software Engineering Jobs in Canada | Reblet",
+  title: "Software Engineering Jobs in USA & Canada | Reblet",
   description:
-    "Browse curated software engineering jobs at top Canadian tech companies. Find roles at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
+    "Browse curated software engineering jobs at top tech companies in the United States and Canada. Find roles at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
   openGraph: {
-    title: "Software Engineering Jobs in Canada",
+    title: "Software Engineering Jobs in USA & Canada",
     description:
-      "Browse curated software engineering jobs at top Canadian tech companies.",
+      "Browse curated software engineering jobs at top tech companies in the USA and Canada.",
     type: "website",
     url: "https://www.reblet.com/jobs",
     siteName: "Reblet",

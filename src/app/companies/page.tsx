@@ -4,13 +4,13 @@ import { getAllFeaturedJobs } from "@/lib/data";
 import { slugifyCompany } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Companies Hiring | Reblet",
+  title: "Companies Hiring in USA & Canada | Reblet",
   description:
-    "Explore top Canadian tech companies hiring software engineers. Browse open positions at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
+    "Explore top tech companies hiring software engineers in the United States and Canada. Browse open positions at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
   openGraph: {
-    title: "Companies Hiring Software Engineers",
+    title: "Companies Hiring Software Engineers in USA & Canada",
     description:
-      "Explore top Canadian tech companies hiring software engineers.",
+      "Explore top tech companies hiring software engineers in the USA and Canada.",
     type: "website",
     url: "https://www.reblet.com/companies",
     siteName: "Reblet",

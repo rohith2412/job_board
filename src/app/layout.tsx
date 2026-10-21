@@ -9,11 +9,11 @@ const anaheim = Anaheim({
 
 export const metadata: Metadata = {
   title: {
-    default: "Reblet | Curated Software Engineering Jobs in Canada",
+    default: "Reblet | Curated Software Engineering Jobs in USA & Canada",
     template: "%s",
   },
   description:
-    "Discover handpicked software engineering jobs at top Canadian tech companies.",
+    "Discover handpicked software engineering jobs at top tech companies in the USA and Canada.",
   icons: {
     icon: "/favicon.png",
   },
