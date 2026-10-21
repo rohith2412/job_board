@@ -9,8 +9,21 @@ interface User {
   email: string;
   name: string;
   image: string;
+  region?: string;
   createdAt: string;
 }
+
+const REGION_LABELS: Record<string, string> = {
+  US: "United States",
+  CA: "Canada",
+  CH: "Switzerland",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  AU: "Australia",
+  IN: "India",
+  OTHER: "Other",
+};
 
 interface Analytics {
   totalVisits: number;
@@ -297,13 +310,20 @@ export default function AdminPage() {
                         {user.email}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400 whitespace-nowrap">
-                      {new Date(user.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
+                    <div className="flex flex-col items-end gap-1">
+                      {user.region && (
+                        <span className="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          {REGION_LABELS[user.region] || user.region}
+                        </span>
+                      )}
+                      <p className="text-xs text-gray-400 whitespace-nowrap">
+                        {new Date(user.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>

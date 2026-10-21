@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
 import { SessionProvider, useSession, signIn } from "next-auth/react";
+import RegionSelector from "@/components/RegionSelector";
 
 interface Job {
   slug: string;
@@ -254,14 +255,34 @@ function JobsFilterInner({
   jobs: Job[];
   locations: string[];
 }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isSignedIn = !!session;
+  const [region, setRegion] = useState<string | null>(null);
+  const [regionLoading, setRegionLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<number | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setRegionLoading(false);
+      return;
+    }
+    fetch("/api/user/region")
+      .then((r) => r.json())
+      .then((data) => {
+        setRegion(data.region || null);
+        setRegionLoading(false);
+      })
+      .catch(() => setRegionLoading(false));
+  }, [status]);
+
+  if (isSignedIn && !regionLoading && !region) {
+    return <RegionSelector onSelect={(r) => setRegion(r)} />;
+  }
 
   const companies = useMemo(
     () => [...new Set(jobs.map((j) => j.company))].sort(),
