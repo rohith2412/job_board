@@ -44,7 +44,7 @@ export default async function JobsPage() {
         snippet: cleanSnippet(job.snippet).slice(0, 120),
         link: job.link || "",
         experienceType: job.experienceType || (job.title.toLowerCase().includes("intern") ? "Internship" : "Full-time"),
-        createdAt: job.createdAt || new Date().toISOString(),
+        createdAt: job.createdAt || "2024-01-01T00:00:00.000Z",
       })
     )
     .sort(
