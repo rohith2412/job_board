@@ -1,107 +1,103 @@
-"use client";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { getAllFeaturedJobs } from "@/lib/data";
+import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+export const metadata: Metadata = {
+  title: "Software Engineering Jobs in Canada | Reblet",
+  description:
+    "Browse curated software engineering jobs at top Canadian tech companies. Find roles at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
+  openGraph: {
+    title: "Software Engineering Jobs in Canada",
+    description:
+      "Browse curated software engineering jobs at top Canadian tech companies.",
+    type: "website",
+    url: "https://www.reblet.com/jobs",
+    siteName: "Reblet",
+  },
+  alternates: {
+    canonical: "https://www.reblet.com/jobs",
+  },
+};
 
-interface Job {
-  title: string;
-  company: string;
-  location: string;
-  snippet: string;
-  link: string;
-  salary: string;
-  source: string;
-}
+export default async function JobsPage() {
+  const jobs = await getAllFeaturedJobs();
 
-function formatSalary(salary: string): string {
-  return salary.replace(/[\d,]+/g, (match) =>
-    Number(match.replace(/,/g, "")).toLocaleString()
-  );
-}
-
-export default function JobsPage() {
-  const router = useRouter();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [keywords, setKeywords] = useState("");
-  const [location, setLocation] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function searchJobs(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    const res = await fetch("/api/jobs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords, location }),
-    });
-    const data = await res.json();
-    setJobs(data.jobs || []);
-    setLoading(false);
+  const grouped = new Map<string, typeof jobs>();
+  for (const job of jobs) {
+    const existing = grouped.get(job.company) || [];
+    existing.push(job);
+    grouped.set(job.company, existing);
   }
 
   return (
-    <main className="min-h-screen bg-white p-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Jobs</h1>
+    <main className="min-h-screen bg-white">
+      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+        <div className="px-6 py-8 border-b border-gray-100">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            All Jobs
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {jobs.length} curated positions at {grouped.size} companies
+          </p>
+        </div>
 
-        <form onSubmit={searchJobs} className="flex gap-2 mb-6">
-          <input
-            type="text"
-            placeholder="Keywords (e.g. developer)"
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
-          >
-            {loading ? "Searching..." : "Search"}
-          </button>
-        </form>
-
-        <div className="space-y-4">
-          {jobs.map((job, i) => (
-            <div
-              key={i}
-              onClick={async () => {
-                const res = await fetch("/api/jobs/save", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(job),
-                });
-                const data = await res.json();
-                router.push(`/jobs/${data.slug}`);
-              }}
-              className="cursor-pointer rounded-md border border-gray-200 bg-white p-4 hover:border-gray-300 hover:shadow-sm transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-medium text-blue-600">
-                  {job.title}
-                </span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
-                  {job.source}
-                </span>
-              </div>
-              <p className="text-sm text-gray-700 mt-1">
-                {job.company} {job.location && `· ${job.location}`}
-              </p>
-              {job.salary && (
-                <p className="text-sm text-gray-500 mt-1">{formatSalary(job.salary)}</p>
-              )}
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                {job.snippet.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ")}
-              </p>
-            </div>
-          ))}
+        <div className="flex-1 px-6 py-6 flex flex-col gap-10">
+          {Array.from(grouped.entries()).map(([company, companyJobs]) => {
+            const companySlug = slugifyCompany(company);
+            return (
+              <section key={company}>
+                <div className="flex items-center justify-between mb-4">
+                  <Link
+                    href={`/companies/${companySlug}`}
+                    className="text-base font-semibold text-gray-800 hover:text-gray-600 transition-colors"
+                  >
+                    {company}
+                  </Link>
+                  <span className="text-xs text-gray-400">
+                    {companyJobs.length}{" "}
+                    {companyJobs.length === 1 ? "role" : "roles"}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {companyJobs.map(
+                    (job: {
+                      slug: string;
+                      title: string;
+                      location: string;
+                      salary: string;
+                      snippet: string;
+                    }) => (
+                      <Link
+                        key={job.slug}
+                        href={`/jobs/${job.slug}`}
+                        className="block p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 mb-1">
+                              {job.title}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {job.location}
+                            </p>
+                          </div>
+                          {job.salary && (
+                            <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
+                              {formatSalary(job.salary)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400 mt-2 line-clamp-2">
+                          {cleanSnippet(job.snippet).slice(0, 120)}...
+                        </p>
+                      </Link>
+                    )
+                  )}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </div>
     </main>
