@@ -201,8 +201,8 @@ function DateDropdown({
   );
 }
 
-function timeAgo(dateStr: string): string {
-  const now = new Date();
+function timeAgo(dateStr: string, currentTime: number): string {
+  const now = new Date(currentTime);
   const date = new Date(dateStr);
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -514,7 +514,7 @@ function JobsFilterInner({
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-1.5">
-                      {timeAgo(job.createdAt)}
+                      {now ? timeAgo(job.createdAt, now) : ""}
                     </p>
                   </div>
                   <ApplyButton link={job.link} isSignedIn={isSignedIn} />
