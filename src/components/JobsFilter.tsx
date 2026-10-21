@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatSalary, slugifyCompany } from "@/lib/utils";
 
@@ -13,6 +13,94 @@ interface Job {
   snippet: string;
 }
 
+function Dropdown({
+  label,
+  icon,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  value: string | null;
+  options: string[];
+  onChange: (v: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+          value
+            ? "bg-gray-900 text-white border-gray-900"
+            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+        }`}
+      >
+        {icon}
+        <span className="truncate max-w-[120px]">{value || label}</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl border border-gray-200 shadow-lg shadow-gray-100/50 z-50 py-1.5 max-h-64 overflow-y-auto">
+          <button
+            onClick={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+              !value
+                ? "text-gray-900 font-medium bg-gray-50"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            }`}
+          >
+            All {label}s
+          </button>
+          {options.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+                value === opt
+                  ? "text-gray-900 font-medium bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JobsFilter({
   jobs,
   locations,
@@ -22,7 +110,13 @@ export default function JobsFilter({
 }) {
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
+
+  const companies = useMemo(
+    () => [...new Set(jobs.map((j) => j.company))].sort(),
+    [jobs]
+  );
 
   const filtered = useMemo(() => {
     return jobs.filter((job) => {
@@ -35,12 +129,14 @@ export default function JobsFilter({
       const matchesLocation =
         !selectedLocation || job.location === selectedLocation;
 
+      const matchesCompany = !selectedCompany || job.company === selectedCompany;
+
       const matchesRemote =
         !remoteOnly || job.location?.toLowerCase().includes("remote");
 
-      return matchesSearch && matchesLocation && matchesRemote;
+      return matchesSearch && matchesLocation && matchesCompany && matchesRemote;
     });
-  }, [jobs, search, selectedLocation, remoteOnly]);
+  }, [jobs, search, selectedLocation, selectedCompany, remoteOnly]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Job[]>();
@@ -52,155 +148,203 @@ export default function JobsFilter({
     return map;
   }, [filtered]);
 
-  const hasFilters = search || selectedLocation || remoteOnly;
+  const hasFilters = search || selectedLocation || selectedCompany || remoteOnly;
+  const activeCount = [selectedLocation, selectedCompany, remoteOnly, search].filter(Boolean).length;
 
   return (
     <>
-      <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-4">
-        <div className="relative">
-          <svg
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search jobs or companies..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 transition-all bg-gray-50/50"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+      <div className="sticky top-[57px] z-30 bg-white border-b border-gray-100">
+        <div className="px-6 py-4 flex flex-col gap-3">
+          <div className="relative">
+            <svg
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6L6 18" />
-                <path d="M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Job title, keyword, or company"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-10 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all bg-white"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setRemoteOnly(!remoteOnly)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-              remoteOnly
-                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                : "bg-gray-50 text-gray-500 border border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 no-scrollbar">
+            <Dropdown
+              label="Location"
+              icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              }
+              value={selectedLocation}
+              options={locations}
+              onChange={setSelectedLocation}
+            />
+
+            <Dropdown
+              label="Company"
+              icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M3 21h18" />
+                  <path d="M5 21V7l8-4v18" />
+                  <path d="M19 21V11l-6-4" />
+                </svg>
+              }
+              value={selectedCompany}
+              options={companies}
+              onChange={setSelectedCompany}
+            />
+
+            <button
+              onClick={() => setRemoteOnly(!remoteOnly)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border whitespace-nowrap ${
+                remoteOnly
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M2 12h20" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
               Remote
-            </span>
-          </button>
-
-          {locations.map((loc) => (
-            <button
-              key={loc}
-              onClick={() =>
-                setSelectedLocation(selectedLocation === loc ? null : loc)
-              }
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                selectedLocation === loc
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-50 text-gray-500 border border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              {loc}
             </button>
-          ))}
 
-          {hasFilters && (
-            <button
-              onClick={() => {
-                setSearch("");
-                setSelectedLocation(null);
-                setRemoteOnly(false);
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium text-red-500 hover:bg-red-50 transition-all cursor-pointer"
-            >
-              Clear all
-            </button>
-          )}
+            {hasFilters && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setSelectedLocation(null);
+                  setSelectedCompany(null);
+                  setRemoteOnly(false);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all cursor-pointer whitespace-nowrap"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+                Reset{activeCount > 1 ? ` (${activeCount})` : ""}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 px-6 py-6 flex flex-col gap-10">
+      <div className="flex-1 px-6 py-5 flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-gray-900">{filtered.length}</span>{" "}
+            {filtered.length === 1 ? "job" : "jobs"}
+            {hasFilters ? " found" : " available"}
+          </p>
+          {hasFilters && filtered.length !== jobs.length && (
+            <p className="text-xs text-gray-400">
+              out of {jobs.length} total
+            </p>
+          )}
+        </div>
+
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="M21 21l-4.35-4.35" />
               </svg>
             </div>
-            <p className="text-base font-medium text-gray-800 mb-1">
-              No jobs found
+            <p className="text-lg font-semibold text-gray-800 mb-1">
+              No matching jobs
             </p>
-            <p className="text-sm text-gray-500">
-              Try adjusting your search or filters
+            <p className="text-sm text-gray-500 mb-5 max-w-xs">
+              Try removing some filters or searching for something else
             </p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedLocation(null);
+                setSelectedCompany(null);
+                setRemoteOnly(false);
+              }}
+              className="text-sm font-medium text-gray-900 underline underline-offset-4 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              Clear all filters
+            </button>
           </div>
         ) : (
-          <>
-            <p className="text-xs text-gray-400">
-              {filtered.length} {filtered.length === 1 ? "job" : "jobs"}
-              {hasFilters ? " matching" : ""} at {grouped.size}{" "}
-              {grouped.size === 1 ? "company" : "companies"}
-            </p>
+          <div className="flex flex-col gap-8">
             {Array.from(grouped.entries()).map(([company, companyJobs]) => {
               const companySlug = slugifyCompany(company);
               return (
                 <section key={company}>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <Link
                       href={`/companies/${companySlug}`}
-                      className="text-base font-semibold text-gray-800 hover:text-gray-600 transition-colors"
+                      className="text-sm font-bold text-gray-900 uppercase tracking-wider hover:text-gray-600 transition-colors"
                     >
                       {company}
                     </Link>
-                    <span className="text-xs text-gray-400">
-                      {companyJobs.length}{" "}
-                      {companyJobs.length === 1 ? "role" : "roles"}
+                    <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
+                      {companyJobs.length} {companyJobs.length === 1 ? "role" : "roles"}
                     </span>
                   </div>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {companyJobs.map((job) => (
                       <Link
                         key={job.slug}
                         href={`/jobs/${job.slug}`}
-                        className="block p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all"
+                        className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-base font-semibold text-gray-900 mb-1">
+                            <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
                               {job.title}
                             </h3>
-                            <p className="text-sm text-gray-500">
-                              {job.location}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="flex items-center gap-1 text-sm text-gray-500">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {job.location}
+                              </span>
+                              {job.location?.toLowerCase().includes("remote") && (
+                                <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                  Remote
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {job.salary && (
-                            <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
-                              {formatSalary(job.salary)}
-                            </span>
+                            <div className="text-right flex-shrink-0">
+                              <span className="text-sm font-semibold text-gray-900">
+                                {formatSalary(job.salary)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </Link>
@@ -209,7 +353,7 @@ export default function JobsFilter({
                 </section>
               );
             })}
-          </>
+          </div>
         )}
       </div>
     </>
