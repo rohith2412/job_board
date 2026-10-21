@@ -63,34 +63,32 @@ export default function RegionSelector({
           Choose where you're located to see relevant jobs
         </p>
 
-        <div className="w-full flex flex-col gap-2 mb-6">
+        <div className="w-full flex flex-col gap-2">
           {REGIONS.map((r) => (
-            <button
-              key={r.code}
-              onClick={() => setSelected(r.code)}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer border ${
-                selected === r.code
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <span className="text-lg">{r.flag}</span>
-              {r.name}
-            </button>
+            <div key={r.code} className="flex flex-col gap-2">
+              <button
+                onClick={() => setSelected(r.code)}
+                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer border ${
+                  selected === r.code
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-lg">{r.flag}</span>
+                {r.name}
+              </button>
+              {selected === r.code && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] mb-1"
+                >
+                  {saving ? "Saving..." : "Continue"}
+                </button>
+              )}
+            </div>
           ))}
         </div>
-
-        <button
-          onClick={handleSave}
-          disabled={!selected || saving}
-          className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
-            selected
-              ? "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
-              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
-          }`}
-        >
-          {saving ? "Saving..." : "Continue"}
-        </button>
       </div>
     </div>
   );
