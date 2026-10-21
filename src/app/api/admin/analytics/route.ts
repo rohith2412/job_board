@@ -14,7 +14,7 @@ export async function GET() {
 
   await connectDB();
 
-  const excludeSelf = { $nor: [{ city: "Sudbury", country: "CA" }] };
+  const excludeSelf = { $nor: [{ city: /Sudbury/i, country: "CA" }] };
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
