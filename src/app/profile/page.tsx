@@ -18,7 +18,7 @@ function ProfileContent() {
   if (!session) {
     return (
       <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+        <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">
               <svg
@@ -61,7 +61,7 @@ function ProfileContent() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+      <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
         <div className="flex-1 px-6 py-10 flex flex-col gap-8">
           <div className="flex items-center gap-5">
             {user?.image ? (

@@ -103,7 +103,7 @@ export default async function JobDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+        <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
           <nav className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
             <Link
               href="/jobs"

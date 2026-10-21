@@ -49,7 +49,7 @@ export default async function CompaniesPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+      <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
         <div className="px-6 py-8 border-b border-gray-100">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
             Companies

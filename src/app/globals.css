@@ -12,6 +12,10 @@
   --font-sans: var(--font-anaheim);
 }
 
+html {
+  font-size: 18px;
+}
+
 html,
 body {
   background: #ffffff !important;

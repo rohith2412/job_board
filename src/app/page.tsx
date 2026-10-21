@@ -28,7 +28,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+      <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
         <div className="flex-1 flex flex-col justify-center px-6 py-16">
           <div className="flex flex-col gap-6 mb-12">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight">

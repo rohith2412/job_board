@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anaheim } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import PageTracker from "@/components/PageTracker";
 const anaheim = Anaheim({
   variable: "--font-anaheim",
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <Navbar />
+        <PageTracker />
         {children}
       </body>
     </html>

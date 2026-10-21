@@ -10,6 +10,7 @@ export interface ISavedJob {
   salary: string;
   source: string;
   featured: boolean;
+  experienceType: string;
   createdAt: Date;
 }
 
@@ -24,6 +25,7 @@ const SavedJobSchema = new Schema<ISavedJob>(
     salary: { type: String, default: "" },
     source: { type: String, required: true },
     featured: { type: Boolean, default: false },
+    experienceType: { type: String, default: "Full-time" },
   },
   { timestamps: true }
 );

@@ -32,6 +32,8 @@ export default async function JobsPage() {
         location: string;
         salary: string;
         snippet: string;
+        link: string;
+        experienceType?: string;
         createdAt?: string;
       }) => ({
         slug: job.slug,
@@ -40,6 +42,8 @@ export default async function JobsPage() {
         location: job.location || "",
         salary: job.salary || "",
         snippet: cleanSnippet(job.snippet).slice(0, 120),
+        link: job.link || "",
+        experienceType: job.experienceType || (job.title.toLowerCase().includes("intern") ? "Internship" : "Full-time"),
         createdAt: job.createdAt || new Date().toISOString(),
       })
     )
@@ -60,7 +64,7 @@ export default async function JobsPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl flex flex-col min-h-screen">
+      <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
         <JobsFilter jobs={serialized} locations={locations} />
       </div>
     </main>

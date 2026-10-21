@@ -48,7 +48,7 @@ function JobAuthContent({
         <div className="pb-24" />
 
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-4 z-50">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-3xl">
             <a
               href={link}
               target="_blank"

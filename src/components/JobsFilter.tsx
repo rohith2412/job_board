@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
+import { SessionProvider, useSession, signIn } from "next-auth/react";
 
 interface Job {
   slug: string;
@@ -11,6 +12,8 @@ interface Job {
   location: string;
   salary: string;
   snippet: string;
+  link: string;
+  experienceType: string;
   createdAt: string;
 }
 
@@ -212,21 +215,61 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)} months ago`;
 }
 
-export default function JobsFilter({
+function ApplyButton({ link, isSignedIn }: { link: string; isSignedIn: boolean }) {
+  if (!link) return null;
+
+  if (!isSignedIn) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-gray-100 text-gray-400 text-xs font-semibold border-2 border-gray-200 flex-shrink-0 select-none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" />
+        </svg>
+        Apply
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
+    >
+      Apply
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12h14" />
+        <path d="M12 5l7 7-7 7" />
+      </svg>
+    </a>
+  );
+}
+
+function JobsFilterInner({
   jobs,
   locations,
 }: {
   jobs: Job[];
   locations: string[];
 }) {
+  const { data: session } = useSession();
+  const isSignedIn = !!session;
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<number | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   const companies = useMemo(
     () => [...new Set(jobs.map((j) => j.company))].sort(),
+    [jobs]
+  );
+
+  const experienceTypes = useMemo(
+    () => [...new Set(jobs.map((j) => j.experienceType).filter(Boolean))].sort(),
     [jobs]
   );
 
@@ -244,6 +287,8 @@ export default function JobsFilter({
 
       const matchesCompany = !selectedCompany || job.company === selectedCompany;
 
+      const matchesType = !selectedType || job.experienceType === selectedType;
+
       const matchesRemote =
         !remoteOnly || job.location?.toLowerCase().includes("remote");
 
@@ -251,12 +296,12 @@ export default function JobsFilter({
         !dateFilter ||
         (now.getTime() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= dateFilter;
 
-      return matchesSearch && matchesLocation && matchesCompany && matchesRemote && matchesDate;
+      return matchesSearch && matchesLocation && matchesCompany && matchesType && matchesRemote && matchesDate;
     });
-  }, [jobs, search, selectedLocation, selectedCompany, remoteOnly, dateFilter]);
+  }, [jobs, search, selectedLocation, selectedCompany, selectedType, remoteOnly, dateFilter]);
 
-  const hasFilters = search || selectedLocation || selectedCompany || remoteOnly || dateFilter;
-  const activeCount = [selectedLocation, selectedCompany, remoteOnly, search, dateFilter].filter(Boolean).length;
+  const hasFilters = search || selectedLocation || selectedCompany || selectedType || remoteOnly || dateFilter;
+  const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, search, dateFilter].filter(Boolean).length;
 
   return (
     <>
@@ -327,6 +372,19 @@ export default function JobsFilter({
               onChange={setSelectedCompany}
             />
 
+            <Dropdown
+              label="Experience"
+              icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                </svg>
+              }
+              value={selectedType}
+              options={experienceTypes}
+              onChange={setSelectedType}
+            />
+
             <button
               onClick={() => setRemoteOnly(!remoteOnly)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border whitespace-nowrap ${
@@ -349,6 +407,7 @@ export default function JobsFilter({
                   setSearch("");
                   setSelectedLocation(null);
                   setSelectedCompany(null);
+                  setSelectedType(null);
                   setDateFilter(null);
                   setRemoteOnly(false);
                 }}
@@ -366,6 +425,23 @@ export default function JobsFilter({
       </div>
 
       <div className="flex-1 px-6 py-5 flex flex-col gap-8">
+        {!isSignedIn && (
+          <button
+            onClick={() => signIn("google")}
+            className="flex items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+          >
+            <span className="text-sm text-gray-600">
+              Sign in to apply for jobs
+            </span>
+            <img
+              src="/google-signin-button.svg"
+              alt="Sign in with Google"
+              className="h-9"
+              draggable={false}
+            />
+          </button>
+        )}
+
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             <span className="font-semibold text-gray-900">{filtered.length}</span>{" "}
@@ -393,6 +469,7 @@ export default function JobsFilter({
                 setSearch("");
                 setSelectedLocation(null);
                 setSelectedCompany(null);
+                setSelectedType(null);
                 setDateFilter(null);
                 setRemoteOnly(false);
               }}
@@ -409,7 +486,7 @@ export default function JobsFilter({
                 href={`/jobs/${job.slug}`}
                 className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
                       {job.title}
@@ -427,18 +504,17 @@ export default function JobsFilter({
                           Remote
                         </span>
                       )}
+                      {job.salary && (
+                        <span className="text-sm font-semibold text-gray-900">
+                          {formatSalary(job.salary)}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-400 mt-1.5">
                       {timeAgo(job.createdAt)}
                     </p>
                   </div>
-                  {job.salary && (
-                    <div className="text-right flex-shrink-0">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatSalary(job.salary)}
-                      </span>
-                    </div>
-                  )}
+                  <ApplyButton link={job.link} isSignedIn={isSignedIn} />
                 </div>
               </Link>
             ))}
@@ -446,5 +522,19 @@ export default function JobsFilter({
         )}
       </div>
     </>
+  );
+}
+
+export default function JobsFilter({
+  jobs,
+  locations,
+}: {
+  jobs: Job[];
+  locations: string[];
+}) {
+  return (
+    <SessionProvider>
+      <JobsFilterInner jobs={jobs} locations={locations} />
+    </SessionProvider>
   );
 }
