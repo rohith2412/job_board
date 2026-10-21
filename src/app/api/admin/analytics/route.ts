@@ -14,26 +14,29 @@ export async function GET() {
 
   await connectDB();
 
+  const excludeSelf = { $nor: [{ city: "Sudbury", country: "CA" }] };
+
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [totalVisits, todayVisits, weekVisits, monthVisits] = await Promise.all([
-    Visit.countDocuments(),
-    Visit.countDocuments({ createdAt: { $gte: today } }),
-    Visit.countDocuments({ createdAt: { $gte: weekAgo } }),
-    Visit.countDocuments({ createdAt: { $gte: monthAgo } }),
+    Visit.countDocuments(excludeSelf),
+    Visit.countDocuments({ createdAt: { $gte: today }, ...excludeSelf }),
+    Visit.countDocuments({ createdAt: { $gte: weekAgo }, ...excludeSelf }),
+    Visit.countDocuments({ createdAt: { $gte: monthAgo }, ...excludeSelf }),
   ]);
 
   const topPages = await Visit.aggregate([
+    { $match: excludeSelf },
     { $group: { _id: "$path", count: { $sum: 1 } } },
     { $sort: { count: -1 } },
     { $limit: 10 },
   ]);
 
   const topLocations = await Visit.aggregate([
-    { $match: { country: { $ne: "" } } },
+    { $match: { country: { $ne: "" }, ...excludeSelf } },
     {
       $group: {
         _id: { country: "$country", city: "$city" },
@@ -46,7 +49,7 @@ export async function GET() {
 
   const dailyVisits = await Visit.aggregate([
     {
-      $match: { createdAt: { $gte: monthAgo } },
+      $match: { createdAt: { $gte: monthAgo }, ...excludeSelf },
     },
     {
       $group: {
@@ -61,6 +64,7 @@ export async function GET() {
 
   const uniqueVisitors = await Visit.distinct("ip", {
     ip: { $ne: "" },
+    ...excludeSelf,
   });
 
   return NextResponse.json({
