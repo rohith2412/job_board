@@ -308,7 +308,7 @@ function JobsFilterInner({
 
   return (
     <>
-      <div className="sticky top-[57px] z-30 bg-white border-b border-gray-100">
+      <div className="border-b border-gray-100">
         <div className="px-6 py-4 flex flex-col gap-3">
           <div className="relative">
             <svg
