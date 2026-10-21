@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Anaheim } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PageTracker from "@/components/PageTracker";
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Navbar />
         <PageTracker />
         {children}
+        <Analytics />
       </body>
     </html>
   );
