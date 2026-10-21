@@ -266,6 +266,8 @@ function JobsFilterInner({
   const [dateFilter, setDateFilter] = useState<number | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
 
+  const [now, setNow] = useState<number | null>(null);
+
   useEffect(() => {
     if (status !== "authenticated") {
       setRegionLoading(false);
@@ -280,9 +282,7 @@ function JobsFilterInner({
       .catch(() => setRegionLoading(false));
   }, [status]);
 
-  if (isSignedIn && !regionLoading && !region) {
-    return <RegionSelector onSelect={(r) => setRegion(r)} />;
-  }
+  useEffect(() => { setNow(Date.now()); }, []);
 
   const companies = useMemo(
     () => [...new Set(jobs.map((j) => j.company))].sort(),
@@ -293,9 +293,6 @@ function JobsFilterInner({
     () => [...new Set(jobs.map((j) => j.experienceType).filter(Boolean))].sort(),
     [jobs]
   );
-
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => { setNow(Date.now()); }, []);
 
   const filtered = useMemo(() => {
     const currentTime = now ?? 0;
@@ -326,6 +323,10 @@ function JobsFilterInner({
 
   const hasFilters = search || selectedLocation || selectedCompany || selectedType || remoteOnly || dateFilter;
   const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, search, dateFilter].filter(Boolean).length;
+
+  if (isSignedIn && !regionLoading && !region) {
+    return <RegionSelector onSelect={(r) => setRegion(r)} />;
+  }
 
   return (
     <>

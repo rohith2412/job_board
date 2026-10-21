@@ -34,10 +34,6 @@ function JobAuthContent({
       .catch(() => setRegionLoading(false));
   }, [status]);
 
-  if (isAuthenticated && !regionLoading && !region) {
-    return <RegionSelector onSelect={(r) => setRegion(r)} />;
-  }
-
   if (status === "loading" || regionLoading) {
     return (
       <>
@@ -52,6 +48,10 @@ function JobAuthContent({
         <div className="pb-24" />
       </>
     );
+  }
+
+  if (isAuthenticated && !region) {
+    return <RegionSelector onSelect={(r) => setRegion(r)} />;
   }
 
   if (isAuthenticated) {
