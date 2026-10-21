@@ -190,7 +190,7 @@ export default function JobsFilter({
             )}
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 no-scrollbar">
+          <div className="flex flex-wrap items-center gap-2">
             <Dropdown
               label="Location"
               icon={
