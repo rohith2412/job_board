@@ -37,8 +37,8 @@ export default function RegionSelector({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
-      <div className="w-full max-w-md px-6 py-10 flex flex-col items-center">
+    <div className="fixed inset-0 z-[100] bg-white overflow-y-auto">
+      <div className="w-full max-w-md mx-auto px-6 py-10 flex flex-col items-center min-h-full justify-center">
         <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-5">
           <svg
             width="28"
