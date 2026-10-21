@@ -273,8 +273,11 @@ function JobsFilterInner({
     [jobs]
   );
 
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => { setNow(Date.now()); }, []);
+
   const filtered = useMemo(() => {
-    const now = new Date();
+    const currentTime = now ?? 0;
     return jobs.filter((job) => {
       const q = search.toLowerCase();
       const matchesSearch =
@@ -293,12 +296,12 @@ function JobsFilterInner({
         !remoteOnly || job.location?.toLowerCase().includes("remote");
 
       const matchesDate =
-        !dateFilter ||
-        (now.getTime() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= dateFilter;
+        !dateFilter || !currentTime ||
+        (currentTime - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= dateFilter;
 
       return matchesSearch && matchesLocation && matchesCompany && matchesType && matchesRemote && matchesDate;
     });
-  }, [jobs, search, selectedLocation, selectedCompany, selectedType, remoteOnly, dateFilter]);
+  }, [jobs, search, selectedLocation, selectedCompany, selectedType, remoteOnly, dateFilter, now]);
 
   const hasFilters = search || selectedLocation || selectedCompany || selectedType || remoteOnly || dateFilter;
   const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, search, dateFilter].filter(Boolean).length;
