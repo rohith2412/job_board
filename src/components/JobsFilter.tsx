@@ -11,7 +11,15 @@ interface Job {
   location: string;
   salary: string;
   snippet: string;
+  createdAt: string;
 }
+
+const DATE_OPTIONS = [
+  { label: "Last 24 hours", days: 1 },
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 14 days", days: 14 },
+  { label: "Last 30 days", days: 30 },
+];
 
 function Dropdown({
   label,
@@ -101,6 +109,109 @@ function Dropdown({
   );
 }
 
+function DateDropdown({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selectedLabel = DATE_OPTIONS.find((o) => o.days === value)?.label;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+          value
+            ? "bg-gray-900 text-white border-gray-900"
+            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+        }`}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span className="truncate max-w-[120px]">{selectedLabel || "Date Posted"}</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl border border-gray-200 shadow-lg shadow-gray-100/50 z-50 py-1.5">
+          <button
+            onClick={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+              !value
+                ? "text-gray-900 font-medium bg-gray-50"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            }`}
+          >
+            Any time
+          </button>
+          {DATE_OPTIONS.map((opt) => (
+            <button
+              key={opt.days}
+              onClick={() => {
+                onChange(opt.days);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+                value === opt.days
+                  ? "text-gray-900 font-medium bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function timeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return "1 week ago";
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  if (diffDays < 60) return "1 month ago";
+  return `${Math.floor(diffDays / 30)} months ago`;
+}
+
 export default function JobsFilter({
   jobs,
   locations,
@@ -111,6 +222,7 @@ export default function JobsFilter({
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<number | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   const companies = useMemo(
@@ -119,6 +231,7 @@ export default function JobsFilter({
   );
 
   const filtered = useMemo(() => {
+    const now = new Date();
     return jobs.filter((job) => {
       const q = search.toLowerCase();
       const matchesSearch =
@@ -134,12 +247,16 @@ export default function JobsFilter({
       const matchesRemote =
         !remoteOnly || job.location?.toLowerCase().includes("remote");
 
-      return matchesSearch && matchesLocation && matchesCompany && matchesRemote;
-    });
-  }, [jobs, search, selectedLocation, selectedCompany, remoteOnly]);
+      const matchesDate =
+        !dateFilter ||
+        (now.getTime() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= dateFilter;
 
-  const hasFilters = search || selectedLocation || selectedCompany || remoteOnly;
-  const activeCount = [selectedLocation, selectedCompany, remoteOnly, search].filter(Boolean).length;
+      return matchesSearch && matchesLocation && matchesCompany && matchesRemote && matchesDate;
+    });
+  }, [jobs, search, selectedLocation, selectedCompany, remoteOnly, dateFilter]);
+
+  const hasFilters = search || selectedLocation || selectedCompany || remoteOnly || dateFilter;
+  const activeCount = [selectedLocation, selectedCompany, remoteOnly, search, dateFilter].filter(Boolean).length;
 
   return (
     <>
@@ -181,6 +298,8 @@ export default function JobsFilter({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <DateDropdown value={dateFilter} onChange={setDateFilter} />
+
             <Dropdown
               label="Location"
               icon={
@@ -230,6 +349,7 @@ export default function JobsFilter({
                   setSearch("");
                   setSelectedLocation(null);
                   setSelectedCompany(null);
+                  setDateFilter(null);
                   setRemoteOnly(false);
                 }}
                 className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all cursor-pointer whitespace-nowrap"
@@ -273,6 +393,7 @@ export default function JobsFilter({
                 setSearch("");
                 setSelectedLocation(null);
                 setSelectedCompany(null);
+                setDateFilter(null);
                 setRemoteOnly(false);
               }}
               className="text-sm font-medium text-gray-900 underline underline-offset-4 hover:text-gray-600 transition-colors cursor-pointer"
@@ -307,6 +428,9 @@ export default function JobsFilter({
                         </span>
                       )}
                     </div>
+                    <p className="text-xs text-gray-400 mt-1.5">
+                      {timeAgo(job.createdAt)}
+                    </p>
                   </div>
                   {job.salary && (
                     <div className="text-right flex-shrink-0">

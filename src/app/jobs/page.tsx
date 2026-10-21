@@ -23,23 +23,30 @@ export const metadata: Metadata = {
 export default async function JobsPage() {
   const jobs = await getAllFeaturedJobs();
 
-  const serialized = jobs.map(
-    (job: {
-      slug: string;
-      title: string;
-      company: string;
-      location: string;
-      salary: string;
-      snippet: string;
-    }) => ({
-      slug: job.slug,
-      title: job.title,
-      company: job.company,
-      location: job.location || "",
-      salary: job.salary || "",
-      snippet: cleanSnippet(job.snippet).slice(0, 120),
-    })
-  );
+  const serialized = jobs
+    .map(
+      (job: {
+        slug: string;
+        title: string;
+        company: string;
+        location: string;
+        salary: string;
+        snippet: string;
+        createdAt?: string;
+      }) => ({
+        slug: job.slug,
+        title: job.title,
+        company: job.company,
+        location: job.location || "",
+        salary: job.salary || "",
+        snippet: cleanSnippet(job.snippet).slice(0, 120),
+        createdAt: job.createdAt || new Date().toISOString(),
+      })
+    )
+    .sort(
+      (a: { createdAt: string }, b: { createdAt: string }) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
   const locations = [
     ...new Set(
