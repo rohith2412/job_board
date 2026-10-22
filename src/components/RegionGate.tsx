@@ -14,10 +14,22 @@ export default function RegionGate() {
       setChecked(true);
       return;
     }
+    try {
+      const cached = sessionStorage.getItem("user_region");
+      if (cached) {
+        setRegion(cached);
+        setChecked(true);
+        return;
+      }
+    } catch {}
     fetch("/api/user/region")
       .then((r) => r.json())
       .then((data) => {
-        setRegion(data.region || null);
+        const r = data.region || null;
+        setRegion(r);
+        if (r) {
+          try { sessionStorage.setItem("user_region", r); } catch {}
+        }
         setChecked(true);
       })
       .catch(() => setChecked(true));
@@ -25,5 +37,12 @@ export default function RegionGate() {
 
   if (!checked || status !== "authenticated" || region) return null;
 
-  return <RegionSelector onSelect={(r) => setRegion(r)} />;
+  return (
+    <RegionSelector
+      onSelect={(r) => {
+        setRegion(r);
+        try { sessionStorage.setItem("user_region", r); } catch {}
+      }}
+    />
+  );
 }
