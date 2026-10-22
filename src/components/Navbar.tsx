@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 function NavbarContent() {
@@ -39,12 +39,12 @@ function NavbarContent() {
               )}
             </Link>
           ) : (
-            <button
-              onClick={() => signIn("google")}
-              className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+            <Link
+              href="/login"
+              className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
             >
               Sign in
-            </button>
+            </Link>
           )}
         </div>
       </div>
