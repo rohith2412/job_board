@@ -228,7 +228,7 @@ export default function RankPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Other links
-              <span className="text-gray-400 font-normal"> — portfolio, resume, Devpost, Behance, blog, etc.</span>
+              <span className="text-gray-400 font-normal"> - portfolio, resume, Devpost, Behance, blog, etc.</span>
             </label>
             <div className="flex flex-col gap-2">
               {otherLinks.map((link, i) => (
@@ -278,7 +278,7 @@ export default function RankPage() {
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Brief intro — what you're working on, what roles you're targeting..."
+              placeholder="Brief intro - what you're working on, what roles you're targeting..."
               rows={3}
               disabled={!canRate}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-none disabled:bg-gray-50 disabled:text-gray-500"
