@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useSession,
-  signIn,
-  SessionProvider as NextAuthSessionProvider,
-} from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
 function JobAuthContent({
   snippet,
@@ -120,9 +116,5 @@ export default function JobAuthSection({
   snippet: string;
   link: string;
 }) {
-  return (
-    <NextAuthSessionProvider>
-      <JobAuthContent snippet={snippet} link={link} />
-    </NextAuthSessionProvider>
-  );
+  return <JobAuthContent snippet={snippet} link={link} />;
 }

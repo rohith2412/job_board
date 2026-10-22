@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
-import { SessionProvider, useSession, signIn } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
 interface Job {
   slug: string;
@@ -231,20 +231,19 @@ function ApplyButton({ link, isSignedIn }: { link: string; isSignedIn: boolean }
   }
 
   return (
-    <button
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        window.open(link, "_blank", "noopener,noreferrer");
-      }}
-      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0 cursor-pointer"
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
     >
       Apply
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 12h14" />
         <path d="M12 5l7 7-7 7" />
       </svg>
-    </button>
+    </a>
   );
 }
 
@@ -536,9 +535,5 @@ export default function JobsFilter({
   jobs: Job[];
   locations: string[];
 }) {
-  return (
-    <SessionProvider>
-      <JobsFilterInner jobs={jobs} locations={locations} />
-    </SessionProvider>
-  );
+  return <JobsFilterInner jobs={jobs} locations={locations} />;
 }
