@@ -90,6 +90,9 @@ export default function RankPage() {
           setRating(data.rating);
           setCanRate(data.canRateAgain);
           setNextRateDate(data.nextRateDate);
+          try {
+            localStorage.setItem("rate-promo-rated", "1");
+          } catch {}
           if (data.links) {
             setGithub(data.links.github);
             setLinkedin(data.links.linkedin);
@@ -131,6 +134,9 @@ export default function RankPage() {
           Date.now() + 7 * 86400000
         ).toISOString();
         setNextRateDate(next);
+        try {
+          localStorage.setItem("rate-promo-rated", "1");
+        } catch {}
       }
     } catch {
       setError("Failed to get rating");
