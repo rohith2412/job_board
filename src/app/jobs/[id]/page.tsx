@@ -60,14 +60,33 @@ export default async function JobDetailPage({
   const snippet = cleanSnippet(job.snippet);
   const companySlug = slugifyCompany(job.company);
 
+  const locationParts = job.location?.split(",").map((s: string) => s.trim()) || [];
+  const isRemote = job.location?.toLowerCase().includes("remote");
+
+  const postedDate = job.createdAt
+    ? new Date(job.createdAt).toISOString().split("T")[0]
+    : undefined;
+
+  const validThrough = job.createdAt
+    ? new Date(new Date(job.createdAt).getTime() + 90 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0]
+    : undefined;
+
+  const employmentTypeMap: Record<string, string> = {
+    "Full-time": "FULL_TIME",
+    "Internship": "INTERN",
+    "Co-op": "INTERN",
+    "Contract": "CONTRACTOR",
+  };
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: job.title,
     description: snippet,
-    datePosted: job.createdAt
-      ? new Date(job.createdAt).toISOString().split("T")[0]
-      : undefined,
+    datePosted: postedDate,
+    validThrough,
     hiringOrganization: {
       "@type": "Organization",
       name: job.company,
@@ -78,10 +97,15 @@ export default async function JobDetailPage({
           "@type": "Place",
           address: {
             "@type": "PostalAddress",
-            addressLocality: job.location,
+            addressLocality: locationParts[0] || job.location,
+            addressRegion: locationParts[1] || "",
+            addressCountry: job.location.includes("Canada") || job.location.includes(", ON") || job.location.includes(", BC") || job.location.includes(", QC") || job.location.includes(", AB") ? "CA" : "US",
           },
         }
       : undefined,
+    ...(isRemote && {
+      jobLocationType: "TELECOMMUTE",
+    }),
     baseSalary: job.salary
       ? {
           "@type": "MonetaryAmount",
@@ -89,10 +113,11 @@ export default async function JobDetailPage({
           value: {
             "@type": "QuantitativeValue",
             value: job.salary,
+            unitText: "YEAR",
           },
         }
       : undefined,
-    employmentType: "FULL_TIME",
+    employmentType: employmentTypeMap[job.experienceType] || "FULL_TIME",
     url: `https://www.reblet.com/jobs/${job.slug}`,
   };
 
