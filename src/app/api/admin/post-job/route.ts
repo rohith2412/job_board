@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const claudeApiKey = process.env.CLAUDE_API_KEY;
-  if (!claudeApiKey) {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) {
     return NextResponse.json(
-      { error: "Claude API key not configured" },
+      { error: "OpenAI API key not configured" },
       { status: 500 }
     );
   }
@@ -49,31 +49,45 @@ export async function POST(req: NextRequest) {
 Job posting:
 ${rawText}`;
 
-  const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": claudeApiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!claudeRes.ok) {
-    const err = await claudeRes.text();
+  let aiRes;
+  try {
+    aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  } catch (fetchErr) {
+    console.error("OpenAI API fetch error:", fetchErr);
     return NextResponse.json(
-      { error: "Claude API failed", details: err },
+      { error: `OpenAI API connection failed: ${fetchErr}` },
       { status: 500 }
     );
   }
 
-  const claudeData = await claudeRes.json();
+  if (!aiRes.ok) {
+    const errText = await aiRes.text();
+    console.error("OpenAI API error:", aiRes.status, errText);
+    let message = errText;
+    try {
+      const errJson = JSON.parse(errText);
+      message = errJson.error?.message || errText;
+    } catch {}
+    return NextResponse.json(
+      { error: `OpenAI API error (${aiRes.status}): ${message}` },
+      { status: 500 }
+    );
+  }
+
+  const aiData = await aiRes.json();
   const responseText =
-    claudeData.content?.[0]?.text || "";
+    aiData.choices?.[0]?.message?.content || "";
 
   let parsed;
   try {
@@ -82,7 +96,7 @@ ${rawText}`;
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
     return NextResponse.json(
-      { error: "Failed to parse Claude response", raw: responseText },
+      { error: "Failed to parse AI response", raw: responseText },
       { status: 500 }
     );
   }
