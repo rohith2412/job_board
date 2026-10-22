@@ -3,8 +3,6 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import SessionProvider from "@/components/SessionProvider";
-import RegionSelector from "@/components/RegionSelector";
 
 const REGION_LABELS: Record<string, string> = {
   US: "United States",
@@ -20,7 +18,7 @@ const REGION_LABELS: Record<string, string> = {
 
 function ProfileContent() {
   const { data: session, status } = useSession();
-  const [region, setRegion] = useState<string | null>(null);
+  const [region, setRegion] = useState<string>("");
   const [regionLoading, setRegionLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +29,7 @@ function ProfileContent() {
     fetch("/api/user/region")
       .then((r) => r.json())
       .then((data) => {
-        setRegion(data.region || null);
+        setRegion(data.region || "");
         setRegionLoading(false);
       })
       .catch(() => setRegionLoading(false));
@@ -85,10 +83,6 @@ function ProfileContent() {
         </div>
       </main>
     );
-  }
-
-  if (!region) {
-    return <RegionSelector onSelect={(r) => setRegion(r)} />;
   }
 
   const user = session.user;
@@ -236,9 +230,5 @@ function ProfileContent() {
 }
 
 export default function ProfilePage() {
-  return (
-    <SessionProvider>
-      <ProfileContent />
-    </SessionProvider>
-  );
+  return <ProfileContent />;
 }
