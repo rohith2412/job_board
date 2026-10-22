@@ -3,7 +3,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatSalary } from "@/lib/utils";
-import { useSession, signIn } from "next-auth/react";
 
 interface Job {
   slug: string;
@@ -215,20 +214,8 @@ function timeAgo(dateStr: string, currentTime: number): string {
   return `${Math.floor(diffDays / 30)} months ago`;
 }
 
-function ApplyButton({ link, isSignedIn }: { link: string; isSignedIn: boolean }) {
+function ApplyButton({ link }: { link: string }) {
   if (!link) return null;
-
-  if (!isSignedIn) {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-gray-100 text-gray-400 text-xs font-semibold border-2 border-gray-200 flex-shrink-0 select-none">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0110 0v4" />
-        </svg>
-        Apply
-      </span>
-    );
-  }
 
   return (
     <a
@@ -255,8 +242,6 @@ function JobsFilterInner({
   locations: string[];
 }) {
   const router = useRouter();
-  const { data: session } = useSession();
-  const isSignedIn = !!session;
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
@@ -429,23 +414,6 @@ function JobsFilterInner({
       </div>
 
       <div className="flex-1 px-6 py-5 flex flex-col gap-8">
-        {!isSignedIn && (
-          <button
-            onClick={() => signIn("google")}
-            className="flex items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <span className="text-sm text-gray-600">
-              Sign in to apply for jobs
-            </span>
-            <img
-              src="/google-signin-button.svg"
-              alt="Sign in with Google"
-              className="h-9"
-              draggable={false}
-            />
-          </button>
-        )}
-
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             <span className="font-semibold text-gray-900">{filtered.length}</span>{" "}
@@ -519,7 +487,7 @@ function JobsFilterInner({
                       {now ? timeAgo(job.createdAt, now) : ""}
                     </p>
                   </div>
-                  <ApplyButton link={job.link} isSignedIn={isSignedIn} />
+                  <ApplyButton link={job.link} />
                 </div>
               </div>
             ))}
