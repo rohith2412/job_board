@@ -231,19 +231,20 @@ function ApplyButton({ link, isSignedIn }: { link: string; isSignedIn: boolean }
   }
 
   return (
-    <a
-      href={link}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(link, "_blank", "noopener,noreferrer");
+      }}
+      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0 cursor-pointer"
     >
       Apply
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 12h14" />
         <path d="M12 5l7 7-7 7" />
       </svg>
-    </a>
+    </button>
   );
 }
 
