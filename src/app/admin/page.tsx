@@ -9,8 +9,18 @@ interface User {
   email: string;
   name: string;
   image: string;
+  password?: boolean;
   region?: string;
   createdAt: string;
+}
+
+interface RatingItem {
+  _id: string;
+  userEmail: string;
+  score: number;
+  grade: string;
+  summary: string;
+  ratedAt: string;
 }
 
 const REGION_LABELS: Record<string, string> = {
@@ -55,24 +65,6 @@ interface JobItem {
   createdAt: string;
 }
 
-function StatCard({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: number;
-  sub?: string;
-}) {
-  return (
-    <div className="p-4 rounded-xl bg-gray-50 flex-1 min-w-[120px]">
-      <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
-      {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
 const COUNTRY_NAMES: Record<string, string> = {
   US: "United States",
   CA: "Canada",
@@ -86,15 +78,57 @@ const COUNTRY_NAMES: Record<string, string> = {
   NL: "Netherlands",
 };
 
+type Tab = "analytics" | "users" | "jobs" | "ratings" | "post";
+
+const TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: "analytics", label: "Analytics", icon: "chart" },
+  { key: "users", label: "Users", icon: "users" },
+  { key: "jobs", label: "Jobs", icon: "briefcase" },
+  { key: "ratings", label: "Ratings", icon: "star" },
+  { key: "post", label: "Post Job", icon: "plus" },
+];
+
+function TabIcon({ icon }: { icon: string }) {
+  const props = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  switch (icon) {
+    case "chart":
+      return <svg {...props}><path d="M18 20V10M12 20V4M6 20v-6" /></svg>;
+    case "users":
+      return <svg {...props}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>;
+    case "briefcase":
+      return <svg {...props}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" /></svg>;
+    case "star":
+      return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
+    case "plus":
+      return <svg {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+    default:
+      return null;
+  }
+}
+
+function StatCard({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex-1 min-w-[140px]">
+      <p className="text-2xl font-bold text-gray-900 tracking-tight">{value.toLocaleString()}</p>
+      <p className="text-xs font-medium text-gray-500 mt-1">{label}</p>
+      {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
-  const [tab, setTab] = useState<"analytics" | "users" | "post" | "jobs">("analytics");
+  const [tab, setTab] = useState<Tab>("analytics");
   const [users, setUsers] = useState<User[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [jobs, setJobs] = useState<JobItem[]>([]);
+  const [ratings, setRatings] = useState<RatingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [deletingRating, setDeletingRating] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [rawText, setRawText] = useState("");
   const [applyLink, setApplyLink] = useState("");
@@ -111,20 +145,16 @@ export default function AdminPage() {
     }
 
     Promise.all([
-      fetch("/api/admin/users").then((r) =>
-        r.ok ? r.json() : Promise.reject()
-      ),
-      fetch("/api/admin/analytics").then((r) =>
-        r.ok ? r.json() : Promise.reject()
-      ),
-      fetch("/api/admin/jobs").then((r) =>
-        r.ok ? r.json() : Promise.reject()
-      ),
+      fetch("/api/admin/users").then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch("/api/admin/analytics").then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch("/api/admin/jobs").then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch("/api/admin/ratings").then((r) => r.ok ? r.json() : Promise.reject()),
     ])
-      .then(([userData, analyticsData, jobsData]) => {
+      .then(([userData, analyticsData, jobsData, ratingsData]) => {
         setUsers(userData.users || []);
         setAnalytics(analyticsData);
         setJobs(jobsData.jobs || []);
+        setRatings(ratingsData.ratings || []);
         setLoading(false);
       })
       .catch(() => {
@@ -134,7 +164,7 @@ export default function AdminPage() {
   }, [status, isAdmin]);
 
   async function handleDeleteJob(slug: string) {
-    if (!confirm(`Delete "${slug}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete job "${slug}"? This cannot be undone.`)) return;
     setDeletingSlug(slug);
     try {
       const res = await fetch("/api/admin/delete-job", {
@@ -142,18 +172,46 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug }),
       });
-      if (res.ok) {
-        setJobs((prev) => prev.filter((j) => j.slug !== slug));
-      }
+      if (res.ok) setJobs((prev) => prev.filter((j) => j.slug !== slug));
     } catch {}
     setDeletingSlug(null);
+  }
+
+  async function handleDeleteUser(email: string) {
+    if (!confirm(`Delete user "${email}" and all their data? This cannot be undone.`)) return;
+    setDeletingUser(email);
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.email !== email));
+        setRatings((prev) => prev.filter((r) => r.userEmail !== email));
+      }
+    } catch {}
+    setDeletingUser(null);
+  }
+
+  async function handleDeleteRating(id: string) {
+    if (!confirm("Delete this rating? This cannot be undone.")) return;
+    setDeletingRating(id);
+    try {
+      const res = await fetch("/api/admin/delete-rating", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) setRatings((prev) => prev.filter((r) => r._id !== id));
+    } catch {}
+    setDeletingRating(null);
   }
 
   async function handlePostJob() {
     if (!rawText.trim() || !applyLink.trim()) return;
     setPosting(true);
     setPostResult(null);
-
     try {
       const res = await fetch("/api/admin/post-job", {
         method: "POST",
@@ -177,7 +235,7 @@ export default function AdminPage() {
   if (status === "loading" || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-gray-400">Loading...</p>
+        <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
       </div>
     );
   }
@@ -187,26 +245,13 @@ export default function AdminPage() {
       <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
           <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#ef4444"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
           </div>
-          <p className="text-xl font-semibold text-gray-800 mb-2">
-            Access Denied
-          </p>
-          <p className="text-sm text-gray-500">
-            You don&apos;t have permission to view this page.
-          </p>
+          <p className="text-xl font-semibold text-gray-800 mb-2">Access Denied</p>
+          <p className="text-sm text-gray-500">You don&apos;t have permission to view this page.</p>
         </div>
       </div>
     );
@@ -220,65 +265,341 @@ export default function AdminPage() {
     );
   }
 
+  const filteredUsers = searchQuery
+    ? users.filter((u) => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : users;
+  const filteredJobs = searchQuery
+    ? jobs.filter((j) => j.title?.toLowerCase().includes(searchQuery.toLowerCase()) || j.company?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : jobs;
+  const filteredRatings = searchQuery
+    ? ratings.filter((r) => r.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : ratings;
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+    <main className="min-h-screen bg-gray-50/50">
+      <div className="mx-auto max-w-4xl flex flex-col min-h-screen">
+        {/* Header */}
+        <div className="px-6 py-5 bg-white border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+              <p className="text-xs text-gray-400 mt-0.5">reblet.com</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-xs font-medium text-gray-600">{users.length} users</p>
+                <p className="text-xs text-gray-400">{jobs.length} jobs</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex border-b border-gray-100">
-          <button
-            onClick={() => setTab("analytics")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
-              tab === "analytics"
-                ? "text-gray-900 border-b-2 border-gray-900"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            Analytics
-          </button>
-          <button
-            onClick={() => setTab("jobs")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
-              tab === "jobs"
-                ? "text-gray-900 border-b-2 border-gray-900"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            Jobs ({jobs.length})
-          </button>
-          <button
-            onClick={() => setTab("post")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
-              tab === "post"
-                ? "text-gray-900 border-b-2 border-gray-900"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            Post Job
-          </button>
-          <button
-            onClick={() => setTab("users")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
-              tab === "users"
-                ? "text-gray-900 border-b-2 border-gray-900"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            Users ({users.length})
-          </button>
+        {/* Tab navigation */}
+        <div className="bg-white border-b border-gray-100 px-6">
+          <div className="flex gap-1 overflow-x-auto py-2 -mx-1">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); setSearchQuery(""); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  tab === t.key
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                }`}
+              >
+                <TabIcon icon={t.icon} />
+                {t.label}
+                {t.key === "users" && <span className="ml-0.5 text-[10px] opacity-70">{users.length}</span>}
+                {t.key === "jobs" && <span className="ml-0.5 text-[10px] opacity-70">{jobs.length}</span>}
+                {t.key === "ratings" && <span className="ml-0.5 text-[10px] opacity-70">{ratings.length}</span>}
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* Search bar (for users, jobs, ratings) */}
+        {(tab === "users" || tab === "jobs" || tab === "ratings") && (
+          <div className="px-6 pt-4">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search ${tab}...`}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {tab === "analytics" && analytics && (
+          <div className="px-6 py-6 flex flex-col gap-6">
+            <div className="flex flex-wrap gap-3">
+              <StatCard label="Today" value={analytics.todayVisits} />
+              <StatCard label="This Week" value={analytics.weekVisits} />
+              <StatCard label="This Month" value={analytics.monthVisits} />
+              <StatCard label="All Time" value={analytics.totalVisits} sub={`${analytics.uniqueVisitors} unique`} />
+            </div>
+
+            {analytics.dailyVisits.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+                  Daily Visits (Last 30 Days)
+                </h2>
+                <div className="flex items-end gap-[3px] h-28">
+                  {analytics.dailyVisits.map((day) => {
+                    const max = Math.max(...analytics.dailyVisits.map((d) => d.count));
+                    const height = max > 0 ? (day.count / max) * 100 : 0;
+                    return (
+                      <div
+                        key={day._id}
+                        className="flex-1 bg-gray-900 rounded-sm min-h-[2px] group relative hover:bg-green-500 transition-colors"
+                        style={{ height: `${Math.max(height, 2)}%` }}
+                        title={`${day._id}: ${day.count} visits`}
+                      >
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {day._id.slice(5)}: {day.count}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Top Pages
+                </h2>
+                <div className="flex flex-col gap-1.5">
+                  {analytics.topPages.map((page) => (
+                    <div key={page._id} className="flex items-center justify-between py-1.5">
+                      <span className="text-sm text-gray-700 font-mono truncate mr-4">{page._id}</span>
+                      <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{page.count}</span>
+                    </div>
+                  ))}
+                  {analytics.topPages.length === 0 && (
+                    <p className="text-sm text-gray-400 py-4 text-center">No page views yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Visitor Locations
+                </h2>
+                <div className="flex flex-col gap-1.5">
+                  {analytics.topLocations.map((loc, i) => {
+                    const country = COUNTRY_NAMES[loc._id.country] || loc._id.country;
+                    const label = loc._id.city ? `${loc._id.city}, ${country}` : country || "Unknown";
+                    return (
+                      <div key={i} className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-gray-700 truncate mr-4">{label}</span>
+                        <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{loc.count}</span>
+                      </div>
+                    );
+                  })}
+                  {analytics.topLocations.length === 0 && (
+                    <p className="text-sm text-gray-400 py-4 text-center">No location data yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Users Tab */}
+        {tab === "users" && (
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">{filteredUsers.length} {filteredUsers.length === 1 ? "user" : "users"}</p>
+            </div>
+            {filteredUsers.length === 0 ? (
+              <p className="text-sm text-gray-400 py-8 text-center">
+                {searchQuery ? "No users match your search" : "No users yet"}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filteredUsers.map((user, i) => (
+                  <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 transition-colors">
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-semibold">
+                        {user.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{user.name}</p>
+                        {user.email === ADMIN_EMAIL && (
+                          <span className="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">ADMIN</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                        {user.region && (
+                          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                            {REGION_LABELS[user.region] || user.region}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {user.email !== ADMIN_EMAIL && (
+                      <button
+                        onClick={() => handleDeleteUser(user.email)}
+                        disabled={deletingUser === user.email}
+                        className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Delete user"
+                      >
+                        {deletingUser === user.email ? (
+                          <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Jobs Tab */}
+        {tab === "jobs" && (
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">{filteredJobs.length} {filteredJobs.length === 1 ? "job" : "jobs"}</p>
+            </div>
+            {filteredJobs.length === 0 ? (
+              <p className="text-sm text-gray-400 py-8 text-center">
+                {searchQuery ? "No jobs match your search" : "No jobs yet"}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filteredJobs.map((job) => (
+                  <div key={job.slug} className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{job.title}</p>
+                      <p className="text-xs text-gray-500 truncate">{job.company} · {job.location}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                        <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          {job.experienceType}
+                        </span>
+                        {job.featured && (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">FEATURED</span>
+                        )}
+                      </div>
+                    </div>
+                    <a
+                      href={`/jobs/${job.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                      title="View job"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    </a>
+                    <button
+                      onClick={() => handleDeleteJob(job.slug)}
+                      disabled={deletingSlug === job.slug}
+                      className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                      title="Delete job"
+                    >
+                      {deletingSlug === job.slug ? (
+                        <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ratings Tab */}
+        {tab === "ratings" && (
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">{filteredRatings.length} {filteredRatings.length === 1 ? "rating" : "ratings"}</p>
+            </div>
+            {filteredRatings.length === 0 ? (
+              <p className="text-sm text-gray-400 py-8 text-center">
+                {searchQuery ? "No ratings match your search" : "No ratings yet"}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filteredRatings.map((rating) => {
+                  const scoreColor = rating.score >= 80 ? "text-green-600 bg-green-50" : rating.score >= 60 ? "text-amber-600 bg-amber-50" : rating.score >= 40 ? "text-orange-600 bg-orange-50" : "text-red-600 bg-red-50";
+                  return (
+                    <div key={rating._id} className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 transition-colors">
+                      <div className={`shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center ${scoreColor}`}>
+                        <span className="text-base font-bold leading-none">{rating.score}</span>
+                        <span className="text-[9px] font-semibold mt-0.5">{rating.grade}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{rating.userEmail}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{rating.summary}</p>
+                        <span className="text-[10px] text-gray-400 mt-1 inline-block">
+                          {new Date(rating.ratedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteRating(rating._id)}
+                        disabled={deletingRating === rating._id}
+                        className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Delete rating"
+                      >
+                        {deletingRating === rating._id ? (
+                          <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Post Job Tab */}
         {tab === "post" && (
           <div className="px-6 py-6 flex flex-col gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Job Description
-              </label>
-              <p className="text-xs text-gray-400 mb-2">
-                Paste the full job posting from LinkedIn, Greenhouse, etc.
-              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+              <p className="text-xs text-gray-400 mb-2">Paste the full job posting from LinkedIn, Greenhouse, etc.</p>
               <textarea
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
@@ -289,9 +610,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Apply Link
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Apply Link</label>
               <input
                 type="url"
                 value={applyLink}
@@ -315,16 +634,12 @@ export default function AdminPage() {
 
             {postResult?.success && postResult.job && (
               <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                <p className="text-sm font-semibold text-green-800 mb-2">
-                  Job posted successfully!
-                </p>
+                <p className="text-sm font-semibold text-green-800 mb-2">Job posted successfully!</p>
                 <div className="text-sm text-green-700 space-y-1">
                   <p><span className="font-medium">Title:</span> {postResult.job.title}</p>
                   <p><span className="font-medium">Company:</span> {postResult.job.company}</p>
                   <p><span className="font-medium">Location:</span> {postResult.job.location}</p>
-                  {postResult.job.salary && (
-                    <p><span className="font-medium">Salary:</span> {postResult.job.salary}</p>
-                  )}
+                  {postResult.job.salary && <p><span className="font-medium">Salary:</span> {postResult.job.salary}</p>}
                   <p><span className="font-medium">Type:</span> {postResult.job.experienceType}</p>
                 </div>
                 <a
@@ -341,205 +656,6 @@ export default function AdminPage() {
             {postResult?.error && (
               <div className="p-4 rounded-xl bg-red-50 border border-red-200">
                 <p className="text-sm text-red-700">{postResult.error}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "analytics" && analytics && (
-          <div className="px-6 py-6 flex flex-col gap-6">
-            <div className="flex flex-wrap gap-3">
-              <StatCard label="Today" value={analytics.todayVisits} />
-              <StatCard label="This Week" value={analytics.weekVisits} />
-              <StatCard label="This Month" value={analytics.monthVisits} />
-              <StatCard label="All Time" value={analytics.totalVisits} sub={`${analytics.uniqueVisitors} unique`} />
-            </div>
-
-            {analytics.dailyVisits.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Daily Visits (Last 30 Days)
-                </h2>
-                <div className="flex items-end gap-[3px] h-28 p-4 rounded-xl bg-gray-50">
-                  {analytics.dailyVisits.map((day) => {
-                    const max = Math.max(
-                      ...analytics.dailyVisits.map((d) => d.count)
-                    );
-                    const height = max > 0 ? (day.count / max) * 100 : 0;
-                    return (
-                      <div
-                        key={day._id}
-                        className="flex-1 bg-gray-900 rounded-sm min-h-[2px] group relative"
-                        style={{ height: `${Math.max(height, 2)}%` }}
-                        title={`${day._id}: ${day.count} visits`}
-                      >
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                          {day._id.slice(5)}: {day.count}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Top Pages
-              </h2>
-              <div className="flex flex-col gap-1.5">
-                {analytics.topPages.map((page) => (
-                  <div
-                    key={page._id}
-                    className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-gray-50"
-                  >
-                    <span className="text-sm text-gray-700 font-mono truncate mr-4">
-                      {page._id}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                      {page.count}
-                    </span>
-                  </div>
-                ))}
-                {analytics.topPages.length === 0 && (
-                  <p className="text-sm text-gray-400 py-4 text-center">
-                    No page views yet
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Visitor Locations
-              </h2>
-              <div className="flex flex-col gap-1.5">
-                {analytics.topLocations.map((loc, i) => {
-                  const country =
-                    COUNTRY_NAMES[loc._id.country] || loc._id.country;
-                  const label = loc._id.city
-                    ? `${loc._id.city}, ${country}`
-                    : country || "Unknown";
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-gray-50"
-                    >
-                      <span className="text-sm text-gray-700 truncate mr-4">
-                        {label}
-                      </span>
-                      <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                        {loc.count}
-                      </span>
-                    </div>
-                  );
-                })}
-                {analytics.topLocations.length === 0 && (
-                  <p className="text-sm text-gray-400 py-4 text-center">
-                    No location data yet (available on Vercel)
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "jobs" && (
-          <div className="px-6 py-6">
-            {jobs.length === 0 ? (
-              <p className="text-sm text-gray-400 py-8 text-center">
-                No jobs yet
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {jobs.map((job) => (
-                  <div
-                    key={job.slug}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-gray-50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">
-                        {job.title}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {job.company} · {job.location}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-gray-400">
-                          {new Date(job.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span className="text-[10px] font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
-                          {job.experienceType}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteJob(job.slug)}
-                      disabled={deletingSlug === job.slug}
-                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      {deletingSlug === job.slug ? "..." : "Delete"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "users" && (
-          <div className="px-6 py-6">
-            {users.length === 0 ? (
-              <p className="text-sm text-gray-400 py-8 text-center">
-                No users yet
-              </p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {users.map((user, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-gray-50"
-                  >
-                    {user.image ? (
-                      <img
-                        src={user.image}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-semibold">
-                        {user.name?.[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {user.region && (
-                        <span className="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full whitespace-nowrap">
-                          {REGION_LABELS[user.region] || user.region}
-                        </span>
-                      )}
-                      <p className="text-xs text-gray-400 whitespace-nowrap">
-                        {new Date(user.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>

@@ -16,5 +16,14 @@ export async function GET() {
   await connectDB();
   const users = await User.find({}).sort({ createdAt: -1 }).lean();
 
-  return NextResponse.json({ users });
+  const sanitized = users.map((u) => ({
+    email: u.email,
+    name: u.name,
+    image: u.image,
+    region: u.region,
+    hasPassword: !!u.password,
+    createdAt: u.createdAt,
+  }));
+
+  return NextResponse.json({ users: sanitized });
 }
