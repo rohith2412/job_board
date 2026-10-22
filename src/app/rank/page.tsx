@@ -25,37 +25,54 @@ function ScoreRing({ score, grade }: { score: number; grade: string }) {
       : score >= 40
       ? "#f97316"
       : "#ef4444";
+  const bgColor =
+    score >= 80
+      ? "#f0fdf4"
+      : score >= 60
+      ? "#fefce8"
+      : score >= 40
+      ? "#fff7ed"
+      : "#fef2f2";
+  const label =
+    score >= 80
+      ? "Great"
+      : score >= 60
+      ? "Good"
+      : score >= 40
+      ? "Fair"
+      : "Needs work";
 
   return (
-    <div className="relative w-36 h-36">
-      <svg className="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
-        <circle
-          cx="60"
-          cy="60"
-          r={radius}
-          fill="none"
-          stroke="#e5e7eb"
-          strokeWidth="8"
-        />
-        <circle
-          cx="60"
-          cy="60"
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-gray-900">{score}</span>
-        <span className="text-sm font-semibold" style={{ color }}>
-          {grade}
-        </span>
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative w-40 h-40 rounded-full" style={{ background: bgColor }}>
+        <svg className="w-40 h-40 -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="7" />
+          <circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{score}</span>
+          <span className="text-xs font-bold tracking-wider uppercase mt-0.5" style={{ color }}>
+            {grade}
+          </span>
+        </div>
       </div>
+      <span
+        className="text-xs font-semibold px-3 py-1 rounded-full"
+        style={{ color, background: bgColor }}
+      >
+        {label}
+      </span>
     </div>
   );
 }
@@ -307,56 +324,71 @@ export default function RankPage() {
         </form>
 
         {rating && (
-          <div className="mt-12 flex flex-col items-center gap-8">
+          <div className="mt-12 flex flex-col items-center gap-6">
             <div className="w-full h-px bg-gray-100" />
 
             <ScoreRing score={rating.score} grade={rating.grade} />
 
-            <p className="text-center text-gray-600 text-sm leading-relaxed max-w-md">
-              {rating.summary}
-            </p>
+            <div className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-5">
+              <p className="text-center text-gray-600 text-sm leading-relaxed">
+                {rating.summary}
+              </p>
+            </div>
 
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-green-50 rounded-2xl p-5">
-                <h3 className="text-sm font-semibold text-green-800 mb-3">
-                  Strengths
-                </h3>
-                <ul className="flex flex-col gap-2">
-                  {rating.strengths.map((s, i) => (
-                    <li
-                      key={i}
-                      className="text-sm text-green-700 flex items-start gap-2"
-                    >
-                      <span className="mt-0.5 shrink-0">+</span>
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-amber-50 rounded-2xl p-5">
-                <h3 className="text-sm font-semibold text-amber-800 mb-3">
-                  Improvements
-                </h3>
-                <ul className="flex flex-col gap-2">
-                  {rating.improvements.map((s, i) => (
-                    <li
-                      key={i}
-                      className="text-sm text-amber-700 flex items-start gap-2"
-                    >
-                      <span className="mt-0.5 shrink-0">-</span>
-                      {s}
-                    </li>
-                  ))}
-                </ul>
+            <div className="w-full flex flex-col gap-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Strengths
+              </h3>
+              <div className="flex flex-col gap-2">
+                {rating.strengths.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-green-200 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-green-800">{s}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="w-full bg-blue-50 rounded-2xl p-5">
-              <h3 className="text-sm font-semibold text-blue-800 mb-2">
+            <div className="w-full flex flex-col gap-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Improvements
+              </h3>
+              <div className="flex flex-col gap-2">
+                {rating.improvements.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-amber-800">{s}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col gap-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Pro tip
               </h3>
-              <p className="text-sm text-blue-700">{rating.tip}</p>
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 16v-4M12 8h.01" />
+                  </svg>
+                </div>
+                <span className="text-sm text-blue-800">{rating.tip}</span>
+              </div>
             </div>
           </div>
         )}
