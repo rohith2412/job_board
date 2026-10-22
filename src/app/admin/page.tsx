@@ -36,6 +36,15 @@ interface Analytics {
   dailyVisits: { _id: string; count: number }[];
 }
 
+interface PostedJob {
+  slug: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  experienceType: string;
+}
+
 function StatCard({
   label,
   value,
@@ -69,11 +78,16 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
-  const [tab, setTab] = useState<"users" | "analytics">("analytics");
+  const [tab, setTab] = useState<"analytics" | "users" | "post">("analytics");
   const [users, setUsers] = useState<User[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [rawText, setRawText] = useState("");
+  const [applyLink, setApplyLink] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [postResult, setPostResult] = useState<{ success?: boolean; job?: PostedJob; error?: string } | null>(null);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -102,6 +116,31 @@ export default function AdminPage() {
         setLoading(false);
       });
   }, [status, isAdmin]);
+
+  async function handlePostJob() {
+    if (!rawText.trim() || !applyLink.trim()) return;
+    setPosting(true);
+    setPostResult(null);
+
+    try {
+      const res = await fetch("/api/admin/post-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText, applyLink }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPostResult({ success: true, job: data.job });
+        setRawText("");
+        setApplyLink("");
+      } else {
+        setPostResult({ error: data.error || "Failed to post job" });
+      }
+    } catch {
+      setPostResult({ error: "Network error" });
+    }
+    setPosting(false);
+  }
 
   if (status === "loading" || loading) {
     return (
@@ -168,6 +207,16 @@ export default function AdminPage() {
             Analytics
           </button>
           <button
+            onClick={() => setTab("post")}
+            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
+              tab === "post"
+                ? "text-gray-900 border-b-2 border-gray-900"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            Post Job
+          </button>
+          <button
             onClick={() => setTab("users")}
             className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
               tab === "users"
@@ -178,6 +227,82 @@ export default function AdminPage() {
             Users ({users.length})
           </button>
         </div>
+
+        {tab === "post" && (
+          <div className="px-6 py-6 flex flex-col gap-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job Description
+              </label>
+              <p className="text-xs text-gray-400 mb-2">
+                Paste the full job posting from LinkedIn, Greenhouse, etc.
+              </p>
+              <textarea
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder="Paste the entire job description here..."
+                rows={12}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-y"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Apply Link
+              </label>
+              <input
+                type="url"
+                value={applyLink}
+                onChange={(e) => setApplyLink(e.target.value)}
+                placeholder="https://careers.company.com/job/..."
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
+              />
+            </div>
+
+            <button
+              onClick={handlePostJob}
+              disabled={posting || !rawText.trim() || !applyLink.trim()}
+              className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
+                posting || !rawText.trim() || !applyLink.trim()
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
+                  : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
+              }`}
+            >
+              {posting ? "Processing with AI..." : "Post Job"}
+            </button>
+
+            {postResult?.success && postResult.job && (
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <p className="text-sm font-semibold text-green-800 mb-2">
+                  Job posted successfully!
+                </p>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p><span className="font-medium">Title:</span> {postResult.job.title}</p>
+                  <p><span className="font-medium">Company:</span> {postResult.job.company}</p>
+                  <p><span className="font-medium">Location:</span> {postResult.job.location}</p>
+                  {postResult.job.salary && (
+                    <p><span className="font-medium">Salary:</span> {postResult.job.salary}</p>
+                  )}
+                  <p><span className="font-medium">Type:</span> {postResult.job.experienceType}</p>
+                </div>
+                <a
+                  href={`/jobs/${postResult.job.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 text-sm font-medium text-green-800 underline underline-offset-4"
+                >
+                  View job page
+                </a>
+              </div>
+            )}
+
+            {postResult?.error && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+                <p className="text-sm text-red-700">{postResult.error}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {tab === "analytics" && analytics && (
           <div className="px-6 py-6 flex flex-col gap-6">
