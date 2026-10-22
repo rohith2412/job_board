@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { SavedJob } from "@/models/SavedJob";
@@ -127,6 +128,10 @@ ${rawText}`;
     featured: true,
     experienceType: parsed.experienceType || "Full-time",
   });
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${slug}`);
+  revalidatePath("/");
 
   return NextResponse.json({
     success: true,
