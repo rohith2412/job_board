@@ -45,6 +45,16 @@ interface PostedJob {
   experienceType: string;
 }
 
+interface JobItem {
+  slug: string;
+  title: string;
+  company: string;
+  location: string;
+  experienceType: string;
+  featured: boolean;
+  createdAt: string;
+}
+
 function StatCard({
   label,
   value,
@@ -78,11 +88,13 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
-  const [tab, setTab] = useState<"analytics" | "users" | "post">("analytics");
+  const [tab, setTab] = useState<"analytics" | "users" | "post" | "jobs">("analytics");
   const [users, setUsers] = useState<User[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
 
   const [rawText, setRawText] = useState("");
   const [applyLink, setApplyLink] = useState("");
@@ -105,10 +117,14 @@ export default function AdminPage() {
       fetch("/api/admin/analytics").then((r) =>
         r.ok ? r.json() : Promise.reject()
       ),
+      fetch("/api/admin/jobs").then((r) =>
+        r.ok ? r.json() : Promise.reject()
+      ),
     ])
-      .then(([userData, analyticsData]) => {
+      .then(([userData, analyticsData, jobsData]) => {
         setUsers(userData.users || []);
         setAnalytics(analyticsData);
+        setJobs(jobsData.jobs || []);
         setLoading(false);
       })
       .catch(() => {
@@ -116,6 +132,22 @@ export default function AdminPage() {
         setLoading(false);
       });
   }, [status, isAdmin]);
+
+  async function handleDeleteJob(slug: string) {
+    if (!confirm(`Delete "${slug}"? This cannot be undone.`)) return;
+    setDeletingSlug(slug);
+    try {
+      const res = await fetch("/api/admin/delete-job", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      if (res.ok) {
+        setJobs((prev) => prev.filter((j) => j.slug !== slug));
+      }
+    } catch {}
+    setDeletingSlug(null);
+  }
 
   async function handlePostJob() {
     if (!rawText.trim() || !applyLink.trim()) return;
@@ -205,6 +237,16 @@ export default function AdminPage() {
             }`}
           >
             Analytics
+          </button>
+          <button
+            onClick={() => setTab("jobs")}
+            className={`flex-1 py-3 text-sm font-medium text-center transition-colors cursor-pointer ${
+              tab === "jobs"
+                ? "text-gray-900 border-b-2 border-gray-900"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            Jobs ({jobs.length})
           </button>
           <button
             onClick={() => setTab("post")}
@@ -399,6 +441,53 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {tab === "jobs" && (
+          <div className="px-6 py-6">
+            {jobs.length === 0 ? (
+              <p className="text-sm text-gray-400 py-8 text-center">
+                No jobs yet
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {jobs.map((job) => (
+                  <div
+                    key={job.slug}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-gray-50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">
+                        {job.title}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {job.company} · {job.location}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(job.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <span className="text-[10px] font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
+                          {job.experienceType}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteJob(job.slug)}
+                      disabled={deletingSlug === job.slug}
+                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {deletingSlug === job.slug ? "..." : "Delete"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
