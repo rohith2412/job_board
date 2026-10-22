@@ -29,8 +29,7 @@ export async function POST(req: NextRequest) {
   await connectDB();
   await User.findOneAndUpdate(
     { email: session.user.email },
-    { region },
-    { new: true }
+    { $set: { region } }
   );
 
   return NextResponse.json({ region });
