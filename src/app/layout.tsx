@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PageTracker from "@/components/PageTracker";
-import RegionGate from "@/components/RegionGate";
 import SessionProvider from "@/components/SessionProvider";
 const anaheim = Anaheim({
   variable: "--font-anaheim",
@@ -38,7 +37,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SessionProvider>
           <Navbar />
           <PageTracker />
-          <RegionGate />
           {children}
         </SessionProvider>
         <Analytics />
