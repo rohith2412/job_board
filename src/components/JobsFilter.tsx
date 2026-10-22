@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatSalary } from "@/lib/utils";
 import { useSession, signIn } from "next-auth/react";
 
@@ -254,6 +254,7 @@ function JobsFilterInner({
   jobs: Job[];
   locations: string[];
 }) {
+  const router = useRouter();
   const { data: session } = useSession();
   const isSignedIn = !!session;
   const [search, setSearch] = useState("");
@@ -484,10 +485,11 @@ function JobsFilterInner({
         ) : (
           <div className="flex flex-col gap-2.5">
             {filtered.map((job) => (
-              <Link
+              <div
                 key={job.slug}
-                href={`/jobs/${job.slug}`}
-                className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all"
+                onClick={() => router.push(`/jobs/${job.slug}`)}
+                role="link"
+                className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -519,7 +521,7 @@ function JobsFilterInner({
                   </div>
                   <ApplyButton link={job.link} isSignedIn={isSignedIn} />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
