@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PageTracker from "@/components/PageTracker";
 import CookieConsent from "@/components/CookieConsent";
+import RatePromo from "@/components/RatePromo";
 import SessionProvider from "@/components/SessionProvider";
 const anaheim = Anaheim({
   variable: "--font-anaheim",
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <Navbar />
+          <RatePromo />
           <PageTracker />
           {children}
           <CookieConsent />
