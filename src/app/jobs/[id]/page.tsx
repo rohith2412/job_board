@@ -195,9 +195,31 @@ export default async function JobDetailPage({
               >
                 {job.company}
               </Link>
-              {job.location && (
-                <span className="text-sm text-gray-500">{job.location}</span>
-              )}
+              <div className="flex items-center gap-2">
+                {job.location && (
+                  <span className="text-sm text-gray-500">{job.location}</span>
+                )}
+                {job.createdAt && (
+                  <>
+                    {job.location && <span className="text-gray-300">·</span>}
+                    <span className="text-sm text-gray-400">
+                      Posted {(() => {
+                        const now = new Date();
+                        const posted = new Date(job.createdAt);
+                        const diffMs = now.getTime() - posted.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+                        if (diffMins < 60) return diffMins <= 1 ? "just now" : `${diffMins}m ago`;
+                        if (diffHours < 24) return `${diffHours}h ago`;
+                        if (diffDays === 1) return "yesterday";
+                        if (diffDays < 30) return `${diffDays}d ago`;
+                        return posted.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                      })()}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">

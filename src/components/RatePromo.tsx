@@ -96,7 +96,7 @@ export default function RatePromo() {
             onClick={dismiss}
             className="w-full py-3.5 rounded-full text-sm font-semibold text-center border-2 border-black bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all block"
           >
-            Rate my profile — free
+            Rate my profile - free
           </Link>
           <button
             onClick={dismiss}

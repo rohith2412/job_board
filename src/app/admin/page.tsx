@@ -134,6 +134,7 @@ export default function AdminPage() {
   const [applyLink, setApplyLink] = useState("");
   const [posting, setPosting] = useState(false);
   const [postResult, setPostResult] = useState<{ success?: boolean; job?: PostedJob; error?: string } | null>(null);
+  const [revalidating, setRevalidating] = useState(false);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -206,6 +207,14 @@ export default function AdminPage() {
       if (res.ok) setRatings((prev) => prev.filter((r) => r._id !== id));
     } catch {}
     setDeletingRating(null);
+  }
+
+  async function handleRevalidate() {
+    setRevalidating(true);
+    try {
+      await fetch("/api/admin/revalidate", { method: "POST" });
+    } catch {}
+    setRevalidating(false);
   }
 
   async function handlePostJob() {
@@ -286,6 +295,14 @@ export default function AdminPage() {
               <p className="text-xs text-gray-400 mt-0.5">reblet.com</p>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleRevalidate}
+                disabled={revalidating}
+                className="text-xs font-medium text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Clear page cache so new data shows on the site"
+              >
+                {revalidating ? "Clearing..." : "Clear Cache"}
+              </button>
               <div className="text-right">
                 <p className="text-xs font-medium text-gray-600">{users.length} users</p>
                 <p className="text-xs text-gray-400">{jobs.length} jobs</p>
