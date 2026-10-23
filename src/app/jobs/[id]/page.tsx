@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getJobBySlug, getAllFeaturedJobs } from "@/lib/data";
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 import JobAuthSection from "@/components/JobAuthSection";
+import PostedTime from "@/components/PostedTime";
 
 export async function generateStaticParams() {
   const jobs = await getAllFeaturedJobs();
@@ -202,21 +203,7 @@ export default async function JobDetailPage({
                 {job.createdAt && (
                   <>
                     {job.location && <span className="text-gray-300">·</span>}
-                    <span className="text-sm text-gray-400">
-                      Posted {(() => {
-                        const now = new Date();
-                        const posted = new Date(job.createdAt);
-                        const diffMs = now.getTime() - posted.getTime();
-                        const diffMins = Math.floor(diffMs / 60000);
-                        const diffHours = Math.floor(diffMs / 3600000);
-                        const diffDays = Math.floor(diffMs / 86400000);
-                        if (diffMins < 60) return diffMins <= 1 ? "just now" : `${diffMins}m ago`;
-                        if (diffHours < 24) return `${diffHours}h ago`;
-                        if (diffDays === 1) return "yesterday";
-                        if (diffDays < 30) return `${diffDays}d ago`;
-                        return posted.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                      })()}
-                    </span>
+                    <PostedTime date={job.createdAt} />
                   </>
                 )}
               </div>
