@@ -162,6 +162,8 @@ export default function AdminPage() {
   const [editContent, setEditContent] = useState("");
   const [editProfile, setEditProfile] = useState<"company" | "personal1" | "personal2">("company");
   const [copied, setCopied] = useState<string | null>(null);
+  const [linkedInAccounts, setLinkedInAccounts] = useState<{ profileKey: string; name: string; connected: boolean }[]>([]);
+  const [publishing, setPublishing] = useState<string | null>(null);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -178,13 +180,15 @@ export default function AdminPage() {
       fetch("/api/admin/jobs").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/ratings").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/linkedin-posts").then((r) => r.ok ? r.json() : { posts: [] }),
+      fetch("/api/admin/linkedin-accounts").then((r) => r.ok ? r.json() : { accounts: [] }),
     ])
-      .then(([userData, analyticsData, jobsData, ratingsData, postsData]) => {
+      .then(([userData, analyticsData, jobsData, ratingsData, postsData, accountsData]) => {
         setUsers(userData.users || []);
         setAnalytics(analyticsData);
         setJobs(jobsData.jobs || []);
         setRatings(ratingsData.ratings || []);
         setLinkedInPosts(postsData.posts || []);
+        setLinkedInAccounts(accountsData.accounts || []);
         setLoading(false);
       })
       .catch(() => {
@@ -318,6 +322,27 @@ export default function AdminPage() {
         setLinkedInPosts((prev) => prev.filter((p) => p._id !== id));
       }
     } catch {}
+  }
+
+  async function handlePublishPost(postId: string) {
+    if (!confirm("Publish this post to LinkedIn now?")) return;
+    setPublishing(postId);
+    try {
+      const res = await fetch("/api/admin/linkedin-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLinkedInPosts((prev) => prev.map((p) => p._id === postId ? data.post : p));
+      } else {
+        alert(data.error || "Failed to publish");
+      }
+    } catch {
+      alert("Network error");
+    }
+    setPublishing(null);
   }
 
   function handleCopyPost(post: LinkedInPostItem) {
@@ -724,6 +749,37 @@ export default function AdminPage() {
         {/* Content Tab */}
         {tab === "content" && (
           <div className="px-6 py-4 flex flex-col gap-5">
+            {/* Connected Accounts */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">LinkedIn Accounts</h3>
+              <div className="flex flex-col gap-2">
+                {(["company", "personal1", "personal2"] as const).map((key) => {
+                  const account = linkedInAccounts.find((a) => a.profileKey === key);
+                  return (
+                    <div key={key} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${account?.connected ? "bg-green-500" : "bg-gray-300"}`} />
+                        <span className="text-sm font-medium text-gray-700">{PROFILE_LABELS[key]}</span>
+                        {account?.connected && (
+                          <span className="text-xs text-gray-400">{account.name}</span>
+                        )}
+                      </div>
+                      <a
+                        href={`/api/admin/linkedin-auth?profile=${key}`}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                          account?.connected
+                            ? "text-green-600 bg-green-50 hover:bg-green-100"
+                            : "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                        }`}
+                      >
+                        {account?.connected ? "Reconnect" : "Connect"}
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Generate button */}
             <div className="flex items-center gap-3">
               <button
@@ -852,6 +908,16 @@ export default function AdminPage() {
                           >
                             Edit
                           </button>
+                          {post.status !== "posted" && linkedInAccounts.find((a) => a.profileKey === post.profile && a.connected) && (
+                            <button
+                              onClick={() => handlePublishPost(post._id)}
+                              disabled={publishing === post._id}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                              {publishing === post._id ? "Publishing..." : "Publish"}
+                            </button>
+                          )}
                           {post.status !== "posted" && (
                             <button
                               onClick={() => handleMarkPosted(post._id)}
