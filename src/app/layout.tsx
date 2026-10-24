@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Anaheim } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SessionProvider>
           <Navbar />
           <RatePromo />
-          <PageTracker />
+          <Suspense fallback={null}><PageTracker /></Suspense>
           {children}
           <CookieConsent />
         </SessionProvider>
