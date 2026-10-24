@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getAllFeaturedJobs } from "@/lib/data";
+import { getCompanyLogos } from "@/lib/data";
 import { cleanSnippet } from "@/lib/utils";
 import JobsFilter from "@/components/JobsFilter";
 
@@ -21,7 +22,10 @@ export const metadata: Metadata = {
 };
 
 export default async function JobsPage() {
-  const jobs = await getAllFeaturedJobs();
+  const [jobs, logoMap] = await Promise.all([
+    getAllFeaturedJobs(),
+    getCompanyLogos(),
+  ]);
 
   const serialized = jobs
     .map(
@@ -35,6 +39,9 @@ export default async function JobsPage() {
         link: string;
         experienceType?: string;
         createdAt?: string;
+        source?: string;
+        description?: string;
+        applyUrl?: string;
       }) => ({
         slug: job.slug,
         title: job.title,
@@ -45,6 +52,10 @@ export default async function JobsPage() {
         link: job.link || "",
         experienceType: job.experienceType || (job.title.toLowerCase().includes("intern") ? "Internship" : "Full-time"),
         createdAt: job.createdAt || "2024-01-01T00:00:00.000Z",
+        source: job.source || "",
+        description: job.description || "",
+        applyUrl: job.applyUrl || "",
+        logo: job.source === "company" ? (logoMap[job.company] || "") : "",
       })
     )
     .sort(

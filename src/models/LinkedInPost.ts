@@ -2,7 +2,7 @@ import mongoose, { Schema, models } from "mongoose";
 
 export interface ILinkedInPost {
   content: string;
-  profile: "company" | "personal1" | "personal2";
+  profile: "personal1" | "personal2";
   status: "draft" | "scheduled" | "posted";
   jobSlugs: string[];
   scheduledFor?: Date;
@@ -15,7 +15,7 @@ const LinkedInPostSchema = new Schema<ILinkedInPost>(
     content: { type: String, required: true },
     profile: {
       type: String,
-      enum: ["company", "personal1", "personal2"],
+      enum: ["personal1", "personal2"],
       required: true,
     },
     status: {

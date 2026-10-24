@@ -25,62 +25,72 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const account = await LinkedInAccount.findOne({ profileKey: post.profile });
-  if (!account) {
+  const allAccounts = await LinkedInAccount.find({});
+  const connected = allAccounts.filter((a) => new Date(a.expiresAt) > new Date());
+
+  if (connected.length === 0) {
     return NextResponse.json(
-      { error: `No LinkedIn account connected for ${post.profile}. Connect it first.` },
+      { error: "No connected LinkedIn accounts. Connect at least one first." },
       { status: 400 }
     );
   }
 
-  if (new Date(account.expiresAt) < new Date()) {
-    return NextResponse.json(
-      { error: "LinkedIn token expired. Please reconnect the account." },
-      { status: 401 }
-    );
-  }
+  const results: { profile: string; name: string; success: boolean; error?: string }[] = [];
 
-  const publishRes = await fetch("https://api.linkedin.com/rest/posts", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${account.accessToken}`,
-      "Content-Type": "application/json",
-      "X-Restli-Protocol-Version": "2.0.0",
-      "LinkedIn-Version": "202401",
-    },
-    body: JSON.stringify({
-      author: `urn:li:person:${account.linkedinId}`,
-      commentary: post.content,
-      visibility: "PUBLIC",
-      distribution: {
-        feedDistribution: "MAIN_FEED",
-        targetEntities: [],
-        thirdPartyDistributionChannels: [],
-      },
-      lifecycleState: "PUBLISHED",
-      isReshareDisabledByAuthor: false,
-    }),
-  });
+  for (let i = 0; i < connected.length; i++) {
+    const account = connected[i];
+    const author = `urn:li:person:${account.linkedinId}`;
+    const commentary = i === 0 ? post.content : post.content + "\n​";
 
-  if (!publishRes.ok) {
-    const errText = await publishRes.text();
-    let message = errText;
     try {
-      const errJson = JSON.parse(errText);
-      message = errJson.message || errJson.error || errText;
-    } catch {}
-    return NextResponse.json(
-      { error: `LinkedIn API error: ${message}` },
-      { status: publishRes.status }
-    );
+      const publishRes = await fetch("https://api.linkedin.com/rest/posts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${account.accessToken}`,
+          "Content-Type": "application/json",
+          "X-Restli-Protocol-Version": "2.0.0",
+          "LinkedIn-Version": "202610",
+        },
+        body: JSON.stringify({
+          author,
+          commentary,
+          visibility: "PUBLIC",
+          distribution: {
+            feedDistribution: "MAIN_FEED",
+            targetEntities: [],
+            thirdPartyDistributionChannels: [],
+          },
+          lifecycleState: "PUBLISHED",
+          isReshareDisabledByAuthor: false,
+        }),
+      });
+
+      if (publishRes.ok) {
+        results.push({ profile: account.profileKey, name: account.name, success: true });
+      } else {
+        const errText = await publishRes.text();
+        let message = errText;
+        try {
+          const errJson = JSON.parse(errText);
+          message = errJson.message || errJson.error || errText;
+        } catch {}
+        results.push({ profile: account.profileKey, name: account.name, success: false, error: message });
+      }
+    } catch {
+      results.push({ profile: account.profileKey, name: account.name, success: false, error: "Network error" });
+    }
   }
 
-  post.status = "posted";
-  post.postedAt = new Date();
-  await post.save();
+  const anySuccess = results.some((r) => r.success);
+  if (anySuccess) {
+    post.status = "posted";
+    post.postedAt = new Date();
+    await post.save();
+  }
 
   return NextResponse.json({
-    success: true,
+    success: anySuccess,
     post: JSON.parse(JSON.stringify(post)),
+    results,
   });
 }

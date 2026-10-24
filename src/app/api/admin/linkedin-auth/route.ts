@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   }
 
   const profileKey = req.nextUrl.searchParams.get("profile");
-  if (!profileKey || !["company", "personal1", "personal2"].includes(profileKey)) {
+  if (!profileKey || !["personal1", "personal2"].includes(profileKey)) {
     return NextResponse.json({ error: "Invalid profile" }, { status: 400 });
   }
 

@@ -1,7 +1,7 @@
 import mongoose, { Schema, models } from "mongoose";
 
 export interface ILinkedInAccount {
-  profileKey: "company" | "personal1" | "personal2";
+  profileKey: "personal1" | "personal2";
   linkedinId: string;
   name: string;
   accessToken: string;
@@ -14,7 +14,7 @@ const LinkedInAccountSchema = new Schema<ILinkedInAccount>(
   {
     profileKey: {
       type: String,
-      enum: ["company", "personal1", "personal2"],
+      enum: ["personal1", "personal2"],
       required: true,
       unique: true,
     },

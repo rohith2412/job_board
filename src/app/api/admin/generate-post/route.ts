@@ -6,6 +6,29 @@ import { SavedJob } from "@/models/SavedJob";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  await connectDB();
+  const jobs = await SavedJob.find({ featured: true })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .select("title slug company location createdAt")
+    .lean();
+
+  return NextResponse.json({
+    jobs: jobs.map((j) => ({
+      slug: j.slug,
+      title: j.title,
+      company: j.company,
+      location: j.location,
+    })),
+  });
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
@@ -20,13 +43,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { count = 5, audience = "US" } = await req.json().catch(() => ({}));
+  const { count = 5, audience = "US", slugs } = await req.json().catch(() => ({}));
 
   await connectDB();
-  const jobs = await SavedJob.find({ featured: true })
-    .sort({ createdAt: -1 })
-    .limit(count)
-    .lean();
+
+  let jobs;
+  if (Array.isArray(slugs) && slugs.length > 0) {
+    jobs = await SavedJob.find({ slug: { $in: slugs } }).lean();
+  } else {
+    jobs = await SavedJob.find({ featured: true })
+      .sort({ createdAt: -1 })
+      .limit(count)
+      .lean();
+  }
 
   if (jobs.length === 0) {
     return NextResponse.json({ error: "No jobs found" }, { status: 404 });
@@ -48,14 +77,17 @@ ${jobList}
 
 Requirements:
 - Start with an attention-grabbing headline using emojis
-- List each job with its reblet.com link
+- List each job with its reblet.com link as plain text (NOT markdown links)
 - Add a call to action to apply
 - Add a share reminder
 - End with "Browse all jobs → https://reblet.com/jobs"
 - Add relevant hashtags at the end
+- IMPORTANT: Keep the TOTAL post under 2800 characters (LinkedIn cuts off at 3000)
 - Keep it concise and high-energy
 - Focus on ${audience} audience
 - Do NOT include company names, only role titles
+- Do NOT use any markdown formatting (no **, no [], no () links). Write plain text only — LinkedIn does not render markdown.
+- Links should be on their own line as plain URLs
 
 Return ONLY the post text, nothing else.`;
 
@@ -81,7 +113,7 @@ Return ONLY the post text, nothing else.`;
 
   const data = await aiRes.json();
   const content = data.choices?.[0]?.message?.content || "";
-  const slugs = jobs.map((j) => j.slug);
+  const jobSlugs = jobs.map((j) => j.slug);
 
-  return NextResponse.json({ content, jobSlugs: slugs });
+  return NextResponse.json({ content, jobSlugs });
 }

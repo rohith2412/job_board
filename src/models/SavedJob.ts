@@ -11,6 +11,9 @@ export interface ISavedJob {
   source: string;
   featured: boolean;
   experienceType: string;
+  description: string;
+  applyUrl: string;
+  postedByEmail: string;
   createdAt: Date;
 }
 
@@ -26,6 +29,9 @@ const SavedJobSchema = new Schema<ISavedJob>(
     source: { type: String, required: true },
     featured: { type: Boolean, default: false },
     experienceType: { type: String, default: "Full-time" },
+    description: { type: String, default: "" },
+    applyUrl: { type: String, default: "" },
+    postedByEmail: { type: String, default: "" },
   },
   { timestamps: true }
 );

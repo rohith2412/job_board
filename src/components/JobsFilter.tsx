@@ -14,6 +14,10 @@ interface Job {
   link: string;
   experienceType: string;
   createdAt: string;
+  source: string;
+  description: string;
+  applyUrl: string;
+  logo: string;
 }
 
 const DATE_OPTIONS = [
@@ -452,45 +456,127 @@ function JobsFilterInner({
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {filtered.map((job) => (
-              <div
-                key={job.slug}
-                onClick={() => router.push(`/jobs/${job.slug}`)}
-                role="link"
-                className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all cursor-pointer"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+            {filtered.map((job) =>
+              job.source === "company" ? (
+                <div
+                  key={job.slug}
+                  onClick={() => router.push(`/jobs/${job.slug}`)}
+                  role="link"
+                  className="group block rounded-xl border border-green-200 bg-green-50/40 hover:border-green-300 hover:shadow-md hover:shadow-green-100/50 transition-all cursor-pointer overflow-hidden"
+                >
+                  <div className="p-4 sm:p-5 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      {job.logo ? (
+                        <img
+                          src={job.logo}
+                          alt={job.company}
+                          className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
+                          {job.company.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-600">{job.company}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {job.location && (
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {job.location}
+                            </span>
+                          )}
+                          {job.salary && (
+                            <span className="text-xs font-semibold text-gray-700">{formatSalary(job.salary)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold text-green-700 bg-green-200/60 px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider">
+                        Hiring
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
                       {job.title}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="flex items-center gap-1 text-sm text-gray-500">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        {job.location}
-                      </span>
-                      {job.location?.toLowerCase().includes("remote") && (
-                        <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          Remote
-                        </span>
-                      )}
-                      {job.salary && (
-                        <span className="text-sm font-semibold text-gray-900">
-                          {formatSalary(job.salary)}
+
+                    {job.description && (
+                      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 break-words overflow-hidden">
+                        {job.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <p className="text-xs text-gray-400">
+                        {now ? timeAgo(job.createdAt, now) : ""}
+                      </p>
+                      {job.applyUrl ? (
+                        <a
+                          href={job.applyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
+                        >
+                          Apply
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span
+                          onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.slug}/apply`); }}
+                          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0 cursor-pointer"
+                        >
+                          Apply on Reblet
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      {now ? timeAgo(job.createdAt, now) : ""}
-                    </p>
                   </div>
-                  <ApplyButton link={job.link} />
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={job.slug}
+                  onClick={() => router.push(`/jobs/${job.slug}`)}
+                  role="link"
+                  className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+                        {job.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="flex items-center gap-1 text-sm text-gray-500">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                          {job.location}
+                        </span>
+                        {job.location?.toLowerCase().includes("remote") && (
+                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            Remote
+                          </span>
+                        )}
+                        {job.salary && (
+                          <span className="text-sm font-semibold text-gray-900">
+                            {formatSalary(job.salary)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1.5">
+                        {now ? timeAgo(job.createdAt, now) : ""}
+                      </p>
+                    </div>
+                    <ApplyButton link={job.link} />
+                  </div>
+                </div>
+              )
+            )}
           </div>
         )}
       </div>

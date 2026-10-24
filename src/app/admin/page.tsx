@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
@@ -78,31 +79,13 @@ const COUNTRY_NAMES: Record<string, string> = {
   NL: "Netherlands",
 };
 
-interface LinkedInPostItem {
-  _id: string;
-  content: string;
-  profile: "company" | "personal1" | "personal2";
-  status: "draft" | "scheduled" | "posted";
-  jobSlugs: string[];
-  scheduledFor?: string;
-  postedAt?: string;
-  createdAt: string;
-}
-
-const PROFILE_LABELS: Record<string, string> = {
-  company: "Reblet (Company)",
-  personal1: "Profile 1",
-  personal2: "Profile 2",
-};
-
-type Tab = "analytics" | "users" | "jobs" | "ratings" | "content" | "post";
+type Tab = "analytics" | "users" | "jobs" | "ratings" | "post";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "analytics", label: "Analytics", icon: "chart" },
   { key: "users", label: "Users", icon: "users" },
   { key: "jobs", label: "Jobs", icon: "briefcase" },
   { key: "ratings", label: "Ratings", icon: "star" },
-  { key: "content", label: "Content", icon: "send" },
   { key: "post", label: "Post Job", icon: "plus" },
 ];
 
@@ -117,8 +100,6 @@ function TabIcon({ icon }: { icon: string }) {
       return <svg {...props}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" /></svg>;
     case "star":
       return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
-    case "send":
-      return <svg {...props}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>;
     case "plus":
       return <svg {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
     default:
@@ -156,15 +137,6 @@ export default function AdminPage() {
   const [postResult, setPostResult] = useState<{ success?: boolean; job?: PostedJob; error?: string } | null>(null);
   const [revalidating, setRevalidating] = useState(false);
 
-  const [linkedInPosts, setLinkedInPosts] = useState<LinkedInPostItem[]>([]);
-  const [generating, setGenerating] = useState(false);
-  const [editingPost, setEditingPost] = useState<LinkedInPostItem | null>(null);
-  const [editContent, setEditContent] = useState("");
-  const [editProfile, setEditProfile] = useState<"company" | "personal1" | "personal2">("company");
-  const [copied, setCopied] = useState<string | null>(null);
-  const [linkedInAccounts, setLinkedInAccounts] = useState<{ profileKey: string; name: string; connected: boolean }[]>([]);
-  const [publishing, setPublishing] = useState<string | null>(null);
-
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
@@ -179,16 +151,12 @@ export default function AdminPage() {
       fetch("/api/admin/analytics").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/jobs").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/ratings").then((r) => r.ok ? r.json() : Promise.reject()),
-      fetch("/api/admin/linkedin-posts").then((r) => r.ok ? r.json() : { posts: [] }),
-      fetch("/api/admin/linkedin-accounts").then((r) => r.ok ? r.json() : { accounts: [] }),
     ])
-      .then(([userData, analyticsData, jobsData, ratingsData, postsData, accountsData]) => {
+      .then(([userData, analyticsData, jobsData, ratingsData]) => {
         setUsers(userData.users || []);
         setAnalytics(analyticsData);
         setJobs(jobsData.jobs || []);
         setRatings(ratingsData.ratings || []);
-        setLinkedInPosts(postsData.posts || []);
-        setLinkedInAccounts(accountsData.accounts || []);
         setLoading(false);
       })
       .catch(() => {
@@ -248,107 +216,6 @@ export default function AdminPage() {
       await fetch("/api/admin/revalidate", { method: "POST" });
     } catch {}
     setRevalidating(false);
-  }
-
-  async function handleGeneratePost() {
-    setGenerating(true);
-    try {
-      const res = await fetch("/api/admin/generate-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 5, audience: "US" }),
-      });
-      const data = await res.json();
-      if (res.ok && data.content) {
-        setEditContent(data.content);
-        setEditProfile("company");
-        setEditingPost({ _id: "", content: data.content, profile: "company", status: "draft", jobSlugs: data.jobSlugs || [], createdAt: new Date().toISOString() });
-      }
-    } catch {}
-    setGenerating(false);
-  }
-
-  async function handleSavePost() {
-    if (!editContent.trim()) return;
-    try {
-      if (editingPost?._id) {
-        const res = await fetch("/api/admin/linkedin-posts", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingPost._id, content: editContent, profile: editProfile }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setLinkedInPosts((prev) => prev.map((p) => p._id === editingPost._id ? data.post : p));
-        }
-      } else {
-        const res = await fetch("/api/admin/linkedin-posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: editContent, profile: editProfile, status: "scheduled", jobSlugs: editingPost?.jobSlugs || [] }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setLinkedInPosts((prev) => [data.post, ...prev]);
-        }
-      }
-      setEditingPost(null);
-      setEditContent("");
-    } catch {}
-  }
-
-  async function handleMarkPosted(id: string) {
-    try {
-      const res = await fetch("/api/admin/linkedin-posts", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: "posted" }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setLinkedInPosts((prev) => prev.map((p) => p._id === id ? data.post : p));
-      }
-    } catch {}
-  }
-
-  async function handleDeletePost(id: string) {
-    try {
-      const res = await fetch("/api/admin/linkedin-posts", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (res.ok) {
-        setLinkedInPosts((prev) => prev.filter((p) => p._id !== id));
-      }
-    } catch {}
-  }
-
-  async function handlePublishPost(postId: string) {
-    if (!confirm("Publish this post to LinkedIn now?")) return;
-    setPublishing(postId);
-    try {
-      const res = await fetch("/api/admin/linkedin-publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setLinkedInPosts((prev) => prev.map((p) => p._id === postId ? data.post : p));
-      } else {
-        alert(data.error || "Failed to publish");
-      }
-    } catch {
-      alert("Network error");
-    }
-    setPublishing(null);
-  }
-
-  function handleCopyPost(post: LinkedInPostItem) {
-    navigator.clipboard.writeText(post.content);
-    setCopied(post._id);
-    setTimeout(() => setCopied(null), 2000);
   }
 
   async function handlePostJob() {
@@ -429,6 +296,12 @@ export default function AdminPage() {
               <p className="text-xs text-gray-400 mt-0.5">reblet.com</p>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href="/admin/content"
+                className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Content
+              </Link>
               <button
                 onClick={handleRevalidate}
                 disabled={revalidating}
@@ -466,7 +339,6 @@ export default function AdminPage() {
                 {t.key === "users" && <span className="ml-0.5 text-[10px] opacity-70">{users.length}</span>}
                 {t.key === "jobs" && <span className="ml-0.5 text-[10px] opacity-70">{jobs.length}</span>}
                 {t.key === "ratings" && <span className="ml-0.5 text-[10px] opacity-70">{ratings.length}</span>}
-                {t.key === "content" && linkedInPosts.filter((p) => p.status !== "posted").length > 0 && <span className="ml-0.5 text-[10px] opacity-70">{linkedInPosts.filter((p) => p.status !== "posted").length}</span>}
               </button>
             ))}
           </div>
@@ -743,202 +615,6 @@ export default function AdminPage() {
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Content Tab */}
-        {tab === "content" && (
-          <div className="px-6 py-4 flex flex-col gap-5">
-            {/* Connected Accounts */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">LinkedIn Accounts</h3>
-              <div className="flex flex-col gap-2">
-                {(["company", "personal1", "personal2"] as const).map((key) => {
-                  const account = linkedInAccounts.find((a) => a.profileKey === key);
-                  return (
-                    <div key={key} className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${account?.connected ? "bg-green-500" : "bg-gray-300"}`} />
-                        <span className="text-sm font-medium text-gray-700">{PROFILE_LABELS[key]}</span>
-                        {account?.connected && (
-                          <span className="text-xs text-gray-400">{account.name}</span>
-                        )}
-                      </div>
-                      <a
-                        href={`/api/admin/linkedin-auth?profile=${key}`}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                          account?.connected
-                            ? "text-green-600 bg-green-50 hover:bg-green-100"
-                            : "text-blue-600 bg-blue-50 hover:bg-blue-100"
-                        }`}
-                      >
-                        {account?.connected ? "Reconnect" : "Connect"}
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Generate button */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleGeneratePost}
-                disabled={generating}
-                className={`flex-1 py-3 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
-                  generating
-                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
-                    : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
-                }`}
-              >
-                {generating ? "Generating..." : "Generate Post from Latest Jobs"}
-              </button>
-            </div>
-
-            {/* Editor */}
-            {editingPost && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    {editingPost._id ? "Edit Post" : "New Post"}
-                  </h3>
-                  <button onClick={() => { setEditingPost(null); setEditContent(""); }} className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer">
-                    Cancel
-                  </button>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Profile</label>
-                  <div className="flex gap-2">
-                    {(["company", "personal1", "personal2"] as const).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setEditProfile(p)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                          editProfile === p
-                            ? "bg-gray-900 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                      >
-                        {PROFILE_LABELS[p]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  rows={14}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-y font-mono leading-relaxed"
-                  placeholder="Post content..."
-                />
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-gray-400">{editContent.length} characters</p>
-                  <button
-                    onClick={handleSavePost}
-                    disabled={!editContent.trim()}
-                    className="px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {editingPost._id ? "Update" : "Save to Queue"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Post queue */}
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Post Queue</h3>
-                <div className="flex gap-1.5">
-                  <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                    {linkedInPosts.filter((p) => p.status === "scheduled").length} scheduled
-                  </span>
-                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {linkedInPosts.filter((p) => p.status === "draft").length} drafts
-                  </span>
-                  <span className="text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                    {linkedInPosts.filter((p) => p.status === "posted").length} posted
-                  </span>
-                </div>
-              </div>
-
-              {linkedInPosts.length === 0 ? (
-                <p className="text-sm text-gray-400 py-8 text-center">
-                  No posts yet. Generate your first one!
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {linkedInPosts.map((post) => {
-                    const statusColor = post.status === "posted" ? "text-green-600 bg-green-50" : post.status === "scheduled" ? "text-amber-600 bg-amber-50" : "text-gray-500 bg-gray-100";
-                    return (
-                      <div key={post._id} className="p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 transition-colors">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor}`}>
-                              {post.status}
-                            </span>
-                            <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                              {PROFILE_LABELS[post.profile]}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                            {new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 line-clamp-4 whitespace-pre-wrap mb-3 leading-relaxed">{post.content}</p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleCopyPost(post)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                          >
-                            {copied === post._id ? (
-                              <>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                Copied!
-                              </>
-                            ) : (
-                              <>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                                Copy
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={() => { setEditingPost(post); setEditContent(post.content); setEditProfile(post.profile); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          {post.status !== "posted" && linkedInAccounts.find((a) => a.profileKey === post.profile && a.connected) && (
-                            <button
-                              onClick={() => handlePublishPost(post._id)}
-                              disabled={publishing === post._id}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
-                              {publishing === post._id ? "Publishing..." : "Publish"}
-                            </button>
-                          )}
-                          {post.status !== "posted" && (
-                            <button
-                              onClick={() => handleMarkPosted(post._id)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 transition-colors cursor-pointer"
-                            >
-                              Mark Posted
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeletePost(post._id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-colors cursor-pointer ml-auto"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
         )}
 

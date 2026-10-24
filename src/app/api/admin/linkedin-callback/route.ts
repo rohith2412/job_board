@@ -75,5 +75,5 @@ export async function GET(req: NextRequest) {
     { upsert: true, new: true }
   );
 
-  return NextResponse.redirect(new URL("/admin?linkedin=connected", req.url));
+  return NextResponse.redirect(new URL(`/admin/content?linkedin=connected&profile=${profileKey}`, req.url));
 }
