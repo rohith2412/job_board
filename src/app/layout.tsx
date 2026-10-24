@@ -8,6 +8,7 @@ import PageTracker from "@/components/PageTracker";
 import CookieConsent from "@/components/CookieConsent";
 import RatePromo from "@/components/RatePromo";
 import SessionProvider from "@/components/SessionProvider";
+import Footer from "@/components/Footer";
 const anaheim = Anaheim({
   variable: "--font-anaheim",
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <RatePromo />
           <Suspense fallback={null}><PageTracker /></Suspense>
           {children}
+          <Footer />
           <CookieConsent />
         </SessionProvider>
         <Analytics />

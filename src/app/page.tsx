@@ -94,11 +94,11 @@ export default async function Home() {
           </div>
         </div>
 
-        <footer className="px-6 py-6 border-t border-gray-100 text-center">
+        <div className="px-6 py-6 text-center">
           <p className="text-xs text-gray-400">
             {jobs.length} jobs · {companies.length} companies · Updated daily
           </p>
-        </footer>
+        </div>
       </div>
     </main>
   );
