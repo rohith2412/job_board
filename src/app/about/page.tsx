@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllFeaturedJobs } from "@/lib/data";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "About Reblet | Curated Software Engineering Jobs",
   description: "Reblet is a curated job board for software engineers in the USA and Canada. No spam, no duplicates — just jobs worth applying to.",

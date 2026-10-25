@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { getAllFeaturedJobs } from "@/lib/data";
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 
+export const dynamicParams = true;
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const jobs = await getAllFeaturedJobs();
   const companies = [

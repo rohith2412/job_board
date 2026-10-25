@@ -7,6 +7,9 @@ import PostedTime from "@/components/PostedTime";
 import ApplyButton from "@/components/ApplyButton";
 import JobDescription from "@/components/JobDescription";
 
+export const dynamicParams = true;
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const jobs = await getAllFeaturedJobs();
   return jobs.map((job: { slug: string }) => ({ id: job.slug }));
@@ -71,13 +74,13 @@ export default async function JobDetailPage({
 
   const postedDate = job.createdAt
     ? new Date(job.createdAt).toISOString().split("T")[0]
-    : undefined;
+    : "2026-10-25";
 
   const validThrough = job.createdAt
     ? new Date(new Date(job.createdAt).getTime() + 90 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0]
-    : undefined;
+    : "2027-01-23";
 
   const employmentTypeMap: Record<string, string> = {
     "Full-time": "FULL_TIME",
@@ -85,6 +88,28 @@ export default async function JobDetailPage({
     "Co-op": "INTERN",
     "Contract": "CONTRACTOR",
   };
+
+  const canadianProvinces = ["ON", "BC", "QC", "AB", "MB", "SK", "NB", "NS", "PE", "NL", "YT", "NT", "NU"];
+  const isCanada =
+    job.location?.includes("Canada") ||
+    canadianProvinces.some((p) => job.location?.includes(`, ${p}`));
+
+  const parseSalary = (salary: string) => {
+    const nums = salary.match(/[\d,]+\.?\d*/g)?.map((n) => parseFloat(n.replace(/,/g, ""))) || [];
+    let unitText = "YEAR";
+    if (/\/hr|per hour|hourly/i.test(salary)) unitText = "HOUR";
+    else if (/\/mo|per month|monthly/i.test(salary)) unitText = "MONTH";
+    else if (/\/wk|per week|weekly/i.test(salary)) unitText = "WEEK";
+    if (nums.length >= 2) {
+      return { minValue: nums[0], maxValue: nums[1], unitText };
+    }
+    if (nums.length === 1) {
+      return { value: nums[0], unitText };
+    }
+    return { value: salary, unitText };
+  };
+
+  const salaryData = job.salary ? parseSalary(job.salary) : null;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -104,22 +129,21 @@ export default async function JobDetailPage({
           address: {
             "@type": "PostalAddress",
             addressLocality: locationParts[0] || job.location,
-            addressRegion: locationParts[1] || "",
-            addressCountry: job.location.includes("Canada") || job.location.includes(", ON") || job.location.includes(", BC") || job.location.includes(", QC") || job.location.includes(", AB") ? "CA" : "US",
+            addressRegion: locationParts.length > 1 ? locationParts[1] : "",
+            addressCountry: isCanada ? "CA" : "US",
           },
         }
       : undefined,
     ...(isRemote && {
       jobLocationType: "TELECOMMUTE",
     }),
-    baseSalary: job.salary
+    baseSalary: salaryData
       ? {
           "@type": "MonetaryAmount",
-          currency: job.salary.includes("CAD") ? "CAD" : "USD",
+          currency: job.salary?.includes("CAD") ? "CAD" : "USD",
           value: {
             "@type": "QuantitativeValue",
-            value: job.salary,
-            unitText: "YEAR",
+            ...salaryData,
           },
         }
       : undefined,
