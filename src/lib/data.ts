@@ -5,7 +5,7 @@ import { Company } from "@/models/Company";
 
 export async function getJobBySlug(slug: string) {
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
   await connectDB();
   const job = await SavedJob.findOne({ slug, featured: true }).lean();
   if (!job) return null;
@@ -14,7 +14,7 @@ export async function getJobBySlug(slug: string) {
 
 export async function getAllFeaturedJobs() {
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
   await connectDB();
   const jobs = await SavedJob.find({ featured: true })
     .sort({ company: 1, title: 1 })
@@ -46,7 +46,7 @@ export async function getCompanyLogos(): Promise<Record<string, string>> {
 
 export async function getAdjacentJobs(slug: string) {
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
   await connectDB();
   const allSlugs = await SavedJob.find({ featured: true })
     .sort({ createdAt: -1 })

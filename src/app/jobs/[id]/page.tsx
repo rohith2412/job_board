@@ -7,9 +7,6 @@ import PostedTime from "@/components/PostedTime";
 import ApplyButton from "@/components/ApplyButton";
 import JobDescription from "@/components/JobDescription";
 
-export const dynamicParams = true;
-export const revalidate = 60;
-
 export async function generateStaticParams() {
   const jobs = await getAllFeaturedJobs();
   return jobs.map((job: { slug: string }) => ({ id: job.slug }));

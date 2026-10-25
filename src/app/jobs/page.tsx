@@ -4,8 +4,6 @@ import { getCompanyLogos } from "@/lib/data";
 import { cleanSnippet } from "@/lib/utils";
 import JobsFilter from "@/components/JobsFilter";
 
-export const revalidate = 60;
-
 export const metadata: Metadata = {
   title: "Software Engineering Jobs in USA & Canada | Reblet",
   description:

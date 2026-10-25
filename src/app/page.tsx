@@ -3,8 +3,6 @@ import Link from "next/link";
 import { getAllFeaturedJobs } from "@/lib/data";
 import { slugifyCompany } from "@/lib/utils";
 
-export const revalidate = 60;
-
 export const metadata: Metadata = {
   title: "Reblet | Curated Software Engineering Jobs in USA & Canada",
   description:
