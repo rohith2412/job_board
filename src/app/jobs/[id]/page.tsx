@@ -179,7 +179,7 @@ export default async function JobDetailPage({
             <div className="w-full flex flex-col gap-5">
               {/* Desktop: arrows + card side by side. Mobile: card full width */}
               <div className="w-full flex items-center gap-3">
-                {/* Left arrow — hidden on mobile */}
+                {/* Left arrow - hidden on mobile */}
                 {adjacent.prev ? (
                   <Link
                     href={`/jobs/${adjacent.prev.slug}`}
@@ -255,7 +255,7 @@ export default async function JobDetailPage({
                   )}
                 </div>
 
-                {/* Right arrow — hidden on mobile */}
+                {/* Right arrow - hidden on mobile */}
                 {adjacent.next ? (
                   <Link
                     href={`/jobs/${adjacent.next.slug}`}
@@ -271,7 +271,7 @@ export default async function JobDetailPage({
                 )}
               </div>
 
-              {/* Mobile nav arrows — below card */}
+              {/* Mobile nav arrows - below card */}
               <div className="flex sm:hidden items-center justify-center gap-4">
                 {adjacent.prev ? (
                   <Link

@@ -4,7 +4,7 @@ import { getAllFeaturedJobs } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "About Reblet | Curated Software Engineering Jobs",
-  description: "Reblet is a curated job board for software engineers in the USA and Canada. No spam, no duplicates — just jobs worth applying to.",
+  description: "Reblet is a curated job board for software engineers in the USA and Canada. No spam, no duplicates - just jobs worth applying to.",
 };
 
 export default async function AboutPage() {
@@ -31,7 +31,7 @@ export default async function AboutPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Our Mission</h2>
             <p>
-              Job searching shouldn&apos;t feel like scrolling through an endless feed of irrelevant listings. We built Reblet to cut through the noise — every job on our platform is handpicked and verified, so you spend less time searching and more time applying to roles that actually matter.
+              Job searching shouldn&apos;t feel like scrolling through an endless feed of irrelevant listings. We built Reblet to cut through the noise - every job on our platform is handpicked and verified, so you spend less time searching and more time applying to roles that actually matter.
             </p>
           </section>
 
@@ -49,7 +49,7 @@ export default async function AboutPage() {
                 <span className="text-green-500 font-bold text-lg mt-0.5">✓</span>
                 <div>
                   <strong className="text-gray-800">Software engineering focus</strong>
-                  <p className="text-sm text-gray-500 mt-1">We only list software engineering roles — from internships to senior positions. No unrelated jobs cluttering your search.</p>
+                  <p className="text-sm text-gray-500 mt-1">We only list software engineering roles - from internships to senior positions. No unrelated jobs cluttering your search.</p>
                 </div>
               </li>
               <li className="flex gap-3">

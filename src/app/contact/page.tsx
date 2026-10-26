@@ -85,7 +85,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <p className="font-medium text-gray-700">I found a bug or have a suggestion.</p>
-                <p className="text-gray-500 mt-1">Send us an email — we read every message and appreciate all feedback.</p>
+                <p className="text-gray-500 mt-1">Send us an email - we read every message and appreciate all feedback.</p>
               </div>
             </div>
           </div>

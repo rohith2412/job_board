@@ -393,7 +393,7 @@ export default function ContentPage() {
                   onClick={() => handleGenerate()}
                   className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
                 >
-                  Skip — use latest 5
+                  Skip - use latest 5
                 </button>
               </div>
             </div>
@@ -458,7 +458,7 @@ export default function ContentPage() {
               </div>
               <div className="flex items-center justify-between">
                 <p className={`text-[10px] ${editContent.length > 3000 ? "text-red-500 font-semibold" : editContent.length > 2800 ? "text-amber-500" : "text-gray-400"}`}>
-                  {editContent.length} / 3000 characters{editContent.length > 3000 ? " — will be truncated by LinkedIn!" : ""}
+                  {editContent.length} / 3000 characters{editContent.length > 3000 ? " - will be truncated by LinkedIn!" : ""}
                 </p>
                 <button
                   onClick={handleSave}

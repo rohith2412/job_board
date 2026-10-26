@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { getPaginatedFeaturedJobs, getFeaturedJobsCount, getJobFilterOptions, getCompanyLogos } from "@/lib/data";
 import { cleanSnippet } from "@/lib/utils";
 import JobsFilter from "@/components/JobsFilter";
+import { Suspense } from "react";
+import JobAlertForm from "@/components/JobAlertForm";
+
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Software Engineering Jobs in USA & Canada | Reblet",
@@ -83,6 +87,11 @@ export default async function JobsPage({
           totalPages={totalPages}
           totalJobs={totalCount}
         />
+        <div className="px-6 pb-8">
+          <Suspense>
+            <JobAlertForm />
+          </Suspense>
+        </div>
       </div>
     </main>
   );

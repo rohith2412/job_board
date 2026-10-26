@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   const jobList = jobs
     .map(
       (j, i) =>
-        `${i + 1}. ${j.title} — https://reblet.com/jobs/${j.slug}`
+        `${i + 1}. ${j.title} - https://reblet.com/jobs/${j.slug}`
     )
     .join("\n");
 
@@ -86,7 +86,7 @@ Requirements:
 - Keep it concise and high-energy
 - Focus on ${audience} audience
 - Do NOT include company names, only role titles
-- Do NOT use any markdown formatting (no **, no [], no () links). Write plain text only — LinkedIn does not render markdown.
+- Do NOT use any markdown formatting (no **, no [], no () links). Write plain text only - LinkedIn does not render markdown.
 - Links should be on their own line as plain URLs
 
 Return ONLY the post text, nothing else.`;
