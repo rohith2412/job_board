@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
 
 interface Job {
@@ -241,9 +242,19 @@ function ApplyButton({ link }: { link: string }) {
 function JobsFilterInner({
   jobs,
   locations,
+  companies,
+  experienceTypes,
+  currentPage,
+  totalPages,
+  totalJobs,
 }: {
   jobs: Job[];
   locations: string[];
+  companies: string[];
+  experienceTypes: string[];
+  currentPage: number;
+  totalPages: number;
+  totalJobs: number;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -255,16 +266,6 @@ function JobsFilterInner({
 
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => { setNow(Date.now()); }, []);
-
-  const companies = useMemo(
-    () => [...new Set(jobs.map((j) => j.company))].sort(),
-    [jobs]
-  );
-
-  const experienceTypes = useMemo(
-    () => [...new Set(jobs.map((j) => j.experienceType).filter(Boolean))].sort(),
-    [jobs]
-  );
 
   const filtered = useMemo(() => {
     const currentTime = now ?? 0;
@@ -420,9 +421,10 @@ function JobsFilterInner({
       <div className="flex-1 px-6 py-5 flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            <span className="font-semibold text-gray-900">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? "job" : "jobs"}
-            {hasFilters ? ` found out of ${jobs.length}` : " available"}
+            <span className="font-semibold text-gray-900">{totalJobs}</span>{" "}
+            {totalJobs === 1 ? "job" : "jobs"} available
+            {totalPages > 1 && ` · page ${currentPage} of ${totalPages}`}
+            {hasFilters && filtered.length < jobs.length && ` · ${filtered.length} matching`}
           </p>
         </div>
 
@@ -455,6 +457,7 @@ function JobsFilterInner({
             </button>
           </div>
         ) : (
+          <>
           <div className="flex flex-col gap-2.5">
             {filtered.map((job) =>
               job.source === "company" ? (
@@ -578,6 +581,53 @@ function JobsFilterInner({
               )
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4 pb-2">
+              {currentPage > 1 ? (
+                <Link
+                  href={currentPage === 2 ? "/jobs" : `/jobs?page=${currentPage - 1}`}
+                  scroll={true}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  Previous
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white opacity-40">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  Previous
+                </span>
+              )}
+              <span className="text-sm text-gray-500 px-3">
+                Page <span className="font-semibold text-gray-900">{currentPage}</span> of {totalPages}
+              </span>
+              {currentPage < totalPages ? (
+                <Link
+                  href={`/jobs?page=${currentPage + 1}`}
+                  scroll={true}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  Next
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white opacity-40">
+                  Next
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          )}
+          </>
         )}
       </div>
     </>
@@ -587,9 +637,30 @@ function JobsFilterInner({
 export default function JobsFilter({
   jobs,
   locations,
+  companies,
+  experienceTypes,
+  currentPage,
+  totalPages,
+  totalJobs,
 }: {
   jobs: Job[];
   locations: string[];
+  companies: string[];
+  experienceTypes: string[];
+  currentPage: number;
+  totalPages: number;
+  totalJobs: number;
 }) {
-  return <JobsFilterInner jobs={jobs} locations={locations} />;
+  return (
+    <JobsFilterInner
+      key={currentPage}
+      jobs={jobs}
+      locations={locations}
+      companies={companies}
+      experienceTypes={experienceTypes}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      totalJobs={totalJobs}
+    />
+  );
 }

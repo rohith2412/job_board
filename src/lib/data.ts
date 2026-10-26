@@ -44,6 +44,41 @@ export async function getCompanyLogos(): Promise<Record<string, string>> {
   return JSON.parse(JSON.stringify(map));
 }
 
+export async function getPaginatedFeaturedJobs(page: number, pageSize: number) {
+  "use cache";
+  cacheLife("minutes");
+  await connectDB();
+  const jobs = await SavedJob.find({ featured: true })
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .lean();
+  return JSON.parse(JSON.stringify(jobs));
+}
+
+export async function getFeaturedJobsCount() {
+  "use cache";
+  cacheLife("minutes");
+  await connectDB();
+  return SavedJob.countDocuments({ featured: true });
+}
+
+export async function getJobFilterOptions() {
+  "use cache";
+  cacheLife("hours");
+  await connectDB();
+  const [locations, companies, types] = await Promise.all([
+    SavedJob.distinct("location", { featured: true }),
+    SavedJob.distinct("company", { featured: true }),
+    SavedJob.distinct("experienceType", { featured: true }),
+  ]);
+  return JSON.parse(JSON.stringify({
+    locations: (locations as string[]).filter((l) => l && !l.toLowerCase().includes("remote")).sort(),
+    companies: (companies as string[]).sort(),
+    types: (types as string[]).filter(Boolean).sort(),
+  }));
+}
+
 export async function getAdjacentJobs(slug: string) {
   "use cache";
   cacheLife("minutes");
