@@ -155,7 +155,7 @@ export default async function JobDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <main className="min-h-screen bg-gray-50/50">
-        <div className="mx-auto max-w-2xl flex flex-col min-h-screen px-6">
+        <div className="mx-auto max-w-2xl px-6 overflow-hidden">
           <nav className="flex items-center gap-3 py-5 relative z-10">
             <Link
               href="/jobs"
@@ -175,7 +175,7 @@ export default async function JobDetailPage({
             </Link>
           </nav>
 
-          <div className="flex-1 flex items-center justify-center -mt-16">
+          <div className="py-6 sm:py-10">
             <div className="w-full flex flex-col gap-5">
               {/* Desktop: arrows + card side by side. Mobile: card full width */}
               <div className="w-full flex items-center gap-3">
@@ -195,7 +195,7 @@ export default async function JobDetailPage({
                 )}
 
                 {/* Card */}
-                <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-7 sm:p-12 flex flex-col gap-6">
+                <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200 shadow-sm p-7 sm:p-12 flex flex-col gap-6">
                   <div className="flex items-center gap-3">
                     {companyLogo && (
                       <img
@@ -226,7 +226,7 @@ export default async function JobDetailPage({
                     </div>
                   </div>
 
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight break-words">
                     {job.title}
                   </h1>
 
