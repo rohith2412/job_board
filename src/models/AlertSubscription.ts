@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 const alertSubscriptionSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
-  email: { type: String, required: true },
+  email: { type: String, default: "" },
+  emailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
   stripeCustomerId: { type: String },
   stripeSubscriptionId: { type: String },
   status: {

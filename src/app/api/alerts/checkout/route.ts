@@ -5,11 +5,13 @@ import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { AlertSubscription } from "@/models/AlertSubscription";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   }
 
@@ -25,7 +27,32 @@ export async function POST(req: Request) {
 
   const origin = new URL(req.url).origin;
 
-  const checkoutSession = await stripe.checkout.sessions.create({
+  let plan = "monthly";
+  try {
+    const body = await req.json();
+    if (body.plan === "yearly") plan = "yearly";
+  } catch {}
+
+  const isYearly = plan === "yearly";
+
+  const userEmail = session.user.email || "";
+
+  if (process.env.BYPASS_STRIPE === "true") {
+    await AlertSubscription.findOneAndUpdate(
+      { userId: session.user.id },
+      {
+        userId: session.user.id,
+        ...(userEmail && { email: userEmail }),
+        status: "active",
+        stripeCustomerId: "bypass_free",
+        stripeSubscriptionId: "bypass_free",
+      },
+      { upsert: true }
+    );
+    return NextResponse.json({ url: `${origin}/alerts?success=true` });
+  }
+
+  const checkoutSession = await getStripe().checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [
@@ -34,18 +61,18 @@ export async function POST(req: Request) {
           currency: "usd",
           product_data: {
             name: "Reblet Premium Job Alerts",
-            description: "Daily personalized SWE job alerts delivered to your inbox",
+            description: `Daily personalized SWE job alerts - ${isYearly ? "yearly" : "monthly"} plan`,
           },
-          unit_amount: 499,
-          recurring: { interval: "month" },
+          unit_amount: isYearly ? 2499 : 399,
+          recurring: { interval: isYearly ? "year" : "month" },
         },
         quantity: 1,
       },
     ],
-    customer_email: session.user.email,
+    ...(userEmail && { customer_email: userEmail }),
     metadata: {
       userId: session.user.id,
-      email: session.user.email,
+      ...(userEmail && { email: userEmail }),
     },
     success_url: `${origin}/alerts?success=true`,
     cancel_url: `${origin}/alerts?cancelled=true`,

@@ -20,6 +20,8 @@ export async function GET() {
   return NextResponse.json({
     subscription: {
       status: (sub as any).status,
+      email: (sub as any).email,
+      emailVerified: (sub as any).emailVerified ?? false,
       preferences: (sub as any).preferences,
     },
   });

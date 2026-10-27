@@ -5,7 +5,9 @@ import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { AlertSubscription } from "@/models/AlertSubscription";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
 
   const origin = new URL(req.url).origin;
 
-  const portalSession = await stripe.billingPortal.sessions.create({
+  const portalSession = await getStripe().billingPortal.sessions.create({
     customer: sub.stripeCustomerId,
     return_url: `${origin}/alerts`,
   });

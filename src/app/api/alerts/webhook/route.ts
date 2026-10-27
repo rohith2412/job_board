@@ -3,7 +3,9 @@ import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { AlertSubscription } from "@/models/AlertSubscription";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -11,7 +13,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
@@ -28,12 +30,12 @@ export async function POST(req: Request) {
       const userId = session.metadata?.userId;
       const email = session.metadata?.email || session.customer_email;
 
-      if (userId && email) {
+      if (userId) {
         await AlertSubscription.findOneAndUpdate(
           { userId },
           {
             userId,
-            email,
+            ...(email && { email }),
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
             status: "active",
