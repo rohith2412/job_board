@@ -30,11 +30,6 @@ export default async function Home() {
     salary?: string;
   }[];
 
-  const allCompanies = [
-    ...new Set(jobs.map((j: { company: string }) => j.company)),
-  ].sort() as string[];
-  const totalCompanies = allCompanies.length;
-  const topCompanies = allCompanies.slice(0, 18);
 
   return (
     <main className="min-h-screen bg-white">
@@ -115,43 +110,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="mx-auto max-w-2xl px-6 py-14">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-900">{jobs.length}+</p>
-            <p className="text-sm text-gray-500 mt-1">Open positions</p>
-          </div>
-          <div>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-900">{totalCompanies}</p>
-            <p className="text-sm text-gray-500 mt-1">Companies</p>
-          </div>
-          <div>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-900">24h</p>
-            <p className="text-sm text-gray-500 mt-1">Update cycle</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Companies */}
-      <section className="mx-auto max-w-3xl px-6 pb-14">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5 text-center">
-          Companies hiring now
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {topCompanies.map((name) => (
-            <span
-              key={name}
-              className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100"
-            >
-              {name}
-            </span>
-          ))}
-          <span className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-400 bg-gray-50">
-            +{totalCompanies - topCompanies.length} more
-          </span>
-        </div>
-      </section>
 
       {/* What you get */}
       <section className="bg-gray-50 border-y border-gray-100">
