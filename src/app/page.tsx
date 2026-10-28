@@ -22,158 +22,172 @@ export const metadata: Metadata = {
 export default async function Home() {
   const jobs = await getAllFeaturedJobs();
 
-  const recentJobs = jobs.slice(0, 6) as {
+  const previewJobs = jobs.slice(0, 4) as {
     slug: string;
     title: string;
     company: string;
     location: string;
     salary?: string;
+    experienceType?: string;
   }[];
-
 
   return (
     <main className="min-h-screen bg-white">
-      <style>{`
-        @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .ticker-track {
-          display: flex;
-          gap: 12px;
-          animation: scroll 25s linear infinite;
-          width: max-content;
-        }
-        .ticker-track:hover { animation-play-state: paused; }
-      `}</style>
-
       {/* Hero */}
-      <section className="mx-auto max-w-2xl px-6 pt-20 pb-16 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-[1.15] mb-4">
-          Sharing SWE internship
-          <br />
-          & new grad job
-          <br />
-          <span className="text-gray-400">openings daily</span>
+      <section className="flex flex-col items-center px-6 pt-14 sm:pt-20 pb-20">
+        <p className="text-sm font-medium text-gray-500 mb-5 tracking-wide text-center">
+          {jobs.length} open roles · updated daily
+        </p>
+
+        <h1 className="text-[2.5rem] sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1] mb-5 text-center">
+          SWE internship &<br />
+          new grad jobs,<br />
+          <span className="text-gray-400">every single day</span>
         </h1>
 
-        <p className="text-gray-500 mb-8 text-base sm:text-lg">
-          No spam, no duplicates — just jobs worth applying to.
+        <p className="text-lg text-gray-500 mb-10 text-center">
+          We find the roles. You skip the noise and apply.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/jobs"
-            className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-base font-semibold text-black border-2 border-black transition-all hover:brightness-95 active:translate-y-0.5 active:shadow-none"
-            style={{
-              backgroundColor: "#6fde8a",
-              boxShadow: "0 3px 0 0 #000",
-            }}
-          >
-            Browse All Jobs
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" />
-              <path d="M12 5l7 7-7 7" />
-            </svg>
-          </Link>
-          <Link
-            href="/api/auth/signin"
-            className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-base font-medium text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
-          >
-            Sign in for free
-          </Link>
-        </div>
-      </section>
-
-      {/* Scrolling jobs ticker */}
-      <section className="overflow-hidden py-8 border-y border-gray-100">
-        <div className="ticker-track">
-          {[...recentJobs, ...recentJobs].map((job, i) => (
-            <Link
-              key={`${job.slug}-${i}`}
-              href={`/jobs/${job.slug}`}
-              className="flex-shrink-0 w-72 rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              <p className="text-sm font-semibold text-gray-900 truncate">{job.title}</p>
-              <p className="text-xs text-gray-500 mt-1">{job.company}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-gray-400">{job.location}</span>
-                {job.salary && (
-                  <>
-                    <span className="text-gray-300">·</span>
-                    <span className="text-xs text-green-600 font-medium">{job.salary}</span>
-                  </>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-
-      {/* What you get */}
-      <section className="bg-gray-50 border-y border-gray-100">
-        <div className="mx-auto max-w-2xl px-6 py-14">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">
-            What you get
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {[
-              {
-                title: "Internships & new grad roles",
-                desc: "We focus on entry-level SWE positions at real companies — not recruiter spam.",
-              },
-              {
-                title: "Updated every day",
-                desc: "New listings added daily so you see roles before they blow up on LinkedIn.",
-              },
-              {
-                title: "Salary info when available",
-                desc: "Know what a role pays before you waste time applying.",
-              },
-              {
-                title: "Daily email alerts",
-                desc: "Get 5 matched jobs in your inbox every morning. Set your keywords and forget it.",
-              },
-            ].map((item) => (
-              <div key={item.title} className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mt-0.5">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{item.title}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom CTA */}
-      <section className="mx-auto max-w-2xl px-6 py-16 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-          Stop doomscrolling LinkedIn
-        </h2>
-        <p className="text-gray-500 mb-6">
-          We already found the jobs. You just need to apply.
-        </p>
         <Link
           href="/jobs"
-          className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-base font-semibold text-black border-2 border-black transition-all hover:brightness-95 active:translate-y-0.5 active:shadow-none"
+          className="flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-semibold text-black border-2 border-black transition-all hover:brightness-95 active:translate-y-0.5 active:shadow-none"
           style={{
             backgroundColor: "#6fde8a",
-            boxShadow: "0 3px 0 0 #000",
+            boxShadow: "0 4px 0 0 #000",
           }}
         >
-          Browse All Jobs
+          Browse jobs
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14" />
             <path d="M12 5l7 7-7 7" />
           </svg>
         </Link>
+        <Link
+          href="/api/auth/signin"
+          className="flex items-center justify-center gap-1.5 px-6 py-2 mt-3 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          Sign in for free
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </Link>
+      </section>
+
+      {/* Job preview — show real listings */}
+      <section className="mx-auto max-w-2xl px-6 pb-20">
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-lg shadow-gray-200/60">
+          {/* Safari-style title bar */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-b from-gray-100 to-gray-50 border-b border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+              <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+              <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+            </div>
+            <div className="flex-1 flex justify-center">
+              <div className="flex items-center gap-2 px-4 py-1 rounded-md bg-white/80 border border-gray-200 text-xs text-gray-500 max-w-[280px] w-full justify-center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 flex-shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span className="truncate">reblet.com/jobs</span>
+              </div>
+            </div>
+            <Link href="/jobs" className="text-xs font-medium text-green-600 hover:text-green-700 flex-shrink-0">
+              View all →
+            </Link>
+          </div>
+          {/* Job listings */}
+          <div className="divide-y divide-gray-100 bg-white">
+            {previewJobs.map((job) => (
+              <Link
+                key={job.slug}
+                href={`/jobs/${job.slug}`}
+                className="flex items-start sm:items-center justify-between gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{job.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {job.company} · {job.location}
+                  </p>
+                </div>
+                {job.salary && (
+                  <span className="flex-shrink-0 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                    {job.salary}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why reblet */}
+      <section className="border-t border-gray-100">
+        <div className="mx-auto max-w-2xl px-6 py-20">
+          <div className="grid sm:grid-cols-3 gap-10 sm:gap-8">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-gray-900 mb-1">New roles daily</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Fresh internship and new grad listings added every day — see them before they hit the big boards.
+              </p>
+            </div>
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-gray-900 mb-1">Salary transparency</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Pay ranges shown when available so you know what to expect before clicking apply.
+              </p>
+            </div>
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-gray-900 mb-1">Email alerts</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Set your keywords, get 5 matched jobs in your inbox every morning. No account needed to browse.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA */}
+      <section className="border-t border-gray-100 bg-gray-50">
+        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+            Stop doomscrolling LinkedIn
+          </h2>
+          <p className="text-gray-500 mb-8">
+            We already found the jobs. You just need to apply.
+          </p>
+          <Link
+            href="/jobs"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-semibold text-black border-2 border-black transition-all hover:brightness-95 active:translate-y-0.5 active:shadow-none"
+            style={{
+              backgroundColor: "#6fde8a",
+              boxShadow: "0 4px 0 0 #000",
+            }}
+          >
+            Browse jobs
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" />
+              <path d="M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </section>
     </main>
   );
