@@ -4,7 +4,9 @@ import { AlertSubscription } from "@/models/AlertSubscription";
 import { SavedJob } from "@/models/SavedJob";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -76,7 +78,7 @@ export async function POST(req: Request) {
         )
         .join("");
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: process.env.EMAIL_FROM || "Reblet <onboarding@resend.dev>",
         to: sub.email,
         subject: `Your daily job matches — ${jobs.length} new ${jobs.length === 1 ? "job" : "jobs"}`,
