@@ -4,7 +4,9 @@ import { Subscriber } from "@/models/Subscriber";
 import { Resend } from "resend";
 import crypto from "crypto";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(req: Request) {
   try {
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
     const origin = new URL(req.url).origin;
     const verifyUrl = `${origin}/api/subscribe/verify?token=${verificationToken}`;
 
-    await resend.emails.send({
+    await getResend().emails.send({
       from: process.env.EMAIL_FROM || "Reblet <onboarding@resend.dev>",
       to: email.toLowerCase(),
       subject: "Confirm your Reblet job alerts",
