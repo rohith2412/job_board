@@ -5,6 +5,8 @@ import { getJobBySlug, getAllFeaturedJobs, getAdjacentJobs, getCompanyLogo } fro
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 import PostedTime from "@/components/PostedTime";
 import ApplyButton from "@/components/ApplyButton";
+import AuthApplyButton from "@/components/AuthApplyButton";
+import AuthJobCard from "@/components/AuthJobCard";
 import JobDescription from "@/components/JobDescription";
 
 export async function generateStaticParams() {
@@ -195,65 +197,67 @@ export default async function JobDetailPage({
                 )}
 
                 {/* Card */}
-                <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200 shadow-sm p-7 sm:p-12 flex flex-col gap-6">
-                  <div className="flex items-center gap-3">
-                    {companyLogo && (
-                      <img
-                        src={companyLogo}
-                        alt={job.company}
-                        className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
-                      />
-                    )}
-                    <div>
-                      <Link
-                        href={`/companies/${companySlug}`}
-                        className="text-base font-semibold text-gray-700 hover:text-gray-500 transition-colors"
-                      >
-                        {job.company}
-                      </Link>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-400 mt-1">
-                        {job.location && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            {job.location}
-                          </span>
-                        )}
-                        {job.createdAt && <PostedTime date={job.createdAt} />}
+                <AuthJobCard>
+                  <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200 shadow-sm p-7 sm:p-12 flex flex-col gap-6">
+                    <div className="flex items-center gap-3">
+                      {companyLogo && (
+                        <img
+                          src={companyLogo}
+                          alt={job.company}
+                          className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                        />
+                      )}
+                      <div>
+                        <Link
+                          href={`/companies/${companySlug}`}
+                          className="text-base font-semibold text-gray-700 hover:text-gray-500 transition-colors"
+                        >
+                          {job.company}
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-400 mt-1">
+                          {job.location && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {job.location}
+                            </span>
+                          )}
+                          {job.createdAt && <PostedTime date={job.createdAt} />}
+                        </div>
                       </div>
                     </div>
+
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight break-words">
+                      {job.title}
+                    </h1>
+
+                    {job.salary && (
+                      <span className="text-base text-gray-500 font-medium">{formatSalary(job.salary)}</span>
+                    )}
+
+                    {job.description && (
+                      <JobDescription text={job.description} />
+                    )}
+
+                    {job.source === "company" && !job.applyUrl ? (
+                      <ApplyButton slug={job.slug} />
+                    ) : (
+                      <a
+                        href={job.applyUrl || job.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex items-center justify-center gap-3 w-full py-3 sm:py-4 rounded-full transition-all text-black text-base sm:text-lg font-semibold border-2 border-black bg-green-300 shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
+                      >
+                        Apply
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+                        </svg>
+                      </a>
+                    )}
                   </div>
-
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight break-words">
-                    {job.title}
-                  </h1>
-
-                  {job.salary && (
-                    <span className="text-base text-gray-500 font-medium">{formatSalary(job.salary)}</span>
-                  )}
-
-                  {job.description && (
-                    <JobDescription text={job.description} />
-                  )}
-
-                  {job.source === "company" && !job.applyUrl ? (
-                    <ApplyButton slug={job.slug} />
-                  ) : (
-                    <a
-                      href={job.applyUrl || job.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 flex items-center justify-center gap-3 w-full py-3 sm:py-4 rounded-full transition-all text-black text-base sm:text-lg font-semibold border-2 border-black bg-green-300 shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
-                    >
-                      Apply
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M7 17L17 7" /><path d="M7 7h10v10" />
-                      </svg>
-                    </a>
-                  )}
-                </div>
+                </AuthJobCard>
 
                 {/* Right arrow - hidden on mobile */}
                 {adjacent.next ? (

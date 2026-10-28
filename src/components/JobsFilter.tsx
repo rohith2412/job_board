@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
 
@@ -221,6 +222,19 @@ function timeAgo(dateStr: string, currentTime: number): string {
 
 function ApplyButton({ link }: { link: string }) {
   if (!link) return null;
+  const { data: session } = useSession();
+
+  if (!session) {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); signIn("google", { callbackUrl: window.location.href }); }}
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-xs font-semibold border border-gray-300 hover:bg-gray-50 transition-all flex-shrink-0 cursor-pointer"
+      >
+        <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in to apply
+      </button>
+    );
+  }
 
   return (
     <a
@@ -257,6 +271,7 @@ function JobsFilterInner({
   totalJobs: number;
 }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [search, setSearch] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
@@ -463,120 +478,166 @@ function JobsFilterInner({
               job.source === "company" ? (
                 <div
                   key={job.slug}
-                  onClick={() => router.push(`/jobs/${job.slug}`)}
-                  role="link"
-                  className="group block rounded-xl border border-green-200 bg-green-50/40 hover:border-green-300 hover:shadow-md hover:shadow-green-100/50 transition-all cursor-pointer overflow-hidden"
+                  className="relative rounded-xl border border-green-200 bg-green-50/40 overflow-hidden"
                 >
-                  <div className="p-4 sm:p-5 flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      {job.logo ? (
-                        <img
-                          src={job.logo}
-                          alt={job.company}
-                          className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
-                          {job.company.charAt(0)}
+                  <div
+                    onClick={() => session ? router.push(`/jobs/${job.slug}`) : undefined}
+                    role="link"
+                    className={`group block transition-all ${session ? "cursor-pointer hover:border-green-300 hover:shadow-md hover:shadow-green-100/50" : "blur-[2px] opacity-60 select-none pointer-events-none"}`}
+                  >
+                    <div className="p-4 sm:p-5 flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        {job.logo ? (
+                          <img
+                            src={job.logo}
+                            alt={job.company}
+                            className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
+                            {job.company.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-gray-600">{job.company}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {job.location && (
+                              <span className="flex items-center gap-1 text-xs text-gray-400">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {job.location}
+                              </span>
+                            )}
+                            {job.salary && (
+                              <span className="text-xs font-semibold text-gray-700">{formatSalary(job.salary)}</span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-600">{job.company}</span>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {job.location && (
-                            <span className="flex items-center gap-1 text-xs text-gray-400">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                              </svg>
-                              {job.location}
-                            </span>
-                          )}
-                          {job.salary && (
-                            <span className="text-xs font-semibold text-gray-700">{formatSalary(job.salary)}</span>
-                          )}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-green-700 bg-green-200/60 px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider">
-                        Hiring
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
-                      {job.title}
-                    </h3>
-
-                    {job.description && (
-                      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 break-words overflow-hidden">
-                        {job.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between gap-3 pt-1">
-                      <p className="text-xs text-gray-400">
-                        {now ? timeAgo(job.createdAt, now) : ""}
-                      </p>
-                      {job.applyUrl ? (
-                        <a
-                          href={job.applyUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
-                        >
-                          Apply
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M7 17L17 7" /><path d="M7 7h10v10" />
-                          </svg>
-                        </a>
-                      ) : (
-                        <span
-                          onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.slug}/apply`); }}
-                          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0 cursor-pointer"
-                        >
-                          Apply on Reblet
+                        <span className="text-[10px] font-semibold text-green-700 bg-green-200/60 px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider">
+                          Hiring
                         </span>
+                      </div>
+
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
+                        {job.title}
+                      </h3>
+
+                      {job.description && (
+                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 break-words overflow-hidden">
+                          {job.description}
+                        </p>
                       )}
+
+                      <div className="flex items-center justify-between gap-3 pt-1">
+                        <p className="text-xs text-gray-400">
+                          {now ? timeAgo(job.createdAt, now) : ""}
+                        </p>
+                        {session ? (
+                          job.applyUrl ? (
+                            <a
+                              href={job.applyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0"
+                            >
+                              Apply
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+                              </svg>
+                            </a>
+                          ) : (
+                            <span
+                              onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.slug}/apply`); }}
+                              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all flex-shrink-0 cursor-pointer"
+                            >
+                              Apply on Reblet
+                            </span>
+                          )
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] flex-shrink-0">
+                            Apply
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {!session && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px] rounded-xl">
+                      <button
+                        onClick={() => signIn("google", { callbackUrl: window.location.href })}
+                        className="cursor-pointer hover:opacity-90 transition-opacity"
+                      >
+                        <img src="/google-signin-button.svg" alt="Sign in with Google" className="h-10" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div
                   key={job.slug}
-                  onClick={() => router.push(`/jobs/${job.slug}`)}
-                  role="link"
-                  className="group block p-4 sm:p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50 transition-all cursor-pointer"
+                  className="relative rounded-xl border border-gray-100 overflow-hidden"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
-                        {job.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-sm text-gray-500">
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                          {job.location}
-                        </span>
-                        {job.location?.toLowerCase().includes("remote") && (
-                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                            Remote
+                  <div
+                    onClick={() => session ? router.push(`/jobs/${job.slug}`) : undefined}
+                    role="link"
+                    className={`group block p-4 sm:p-5 transition-all ${session ? "cursor-pointer hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50" : "blur-[2px] opacity-60 select-none pointer-events-none"}`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+                          {job.title}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="flex items-center gap-1 text-sm text-gray-500">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {job.location}
                           </span>
-                        )}
-                        {job.salary && (
-                          <span className="text-sm font-semibold text-gray-900">
-                            {formatSalary(job.salary)}
-                          </span>
-                        )}
+                          {job.location?.toLowerCase().includes("remote") && (
+                            <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                              Remote
+                            </span>
+                          )}
+                          {job.salary && (
+                            <span className="text-sm font-semibold text-gray-900">
+                              {formatSalary(job.salary)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1.5">
+                          {now ? timeAgo(job.createdAt, now) : ""}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1.5">
-                        {now ? timeAgo(job.createdAt, now) : ""}
-                      </p>
+                      {session ? (
+                        <ApplyButton link={job.link} />
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_4px_0_0_#000] flex-shrink-0">
+                          Apply
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
+                          </svg>
+                        </span>
+                      )}
                     </div>
-                    <ApplyButton link={job.link} />
                   </div>
+                  {!session && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px] rounded-xl">
+                      <button
+                        onClick={() => signIn("google", { callbackUrl: window.location.href })}
+                        className="cursor-pointer hover:opacity-90 transition-opacity"
+                      >
+                        <img src="/google-signin-button.svg" alt="Sign in with Google" className="h-10" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             )}
