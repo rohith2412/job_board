@@ -237,8 +237,8 @@ export default async function JobDetailPage({
                       <span className="text-base text-gray-500 font-medium">{formatSalary(job.salary)}</span>
                     )}
 
-                    {job.description && (
-                      <JobDescription text={job.description} />
+                    {(job.description || snippet) && (
+                      <JobDescription text={job.description || snippet} />
                     )}
 
                     {job.source === "company" && !job.applyUrl ? (

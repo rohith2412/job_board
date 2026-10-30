@@ -136,6 +136,9 @@ export default function AdminPage() {
   const [posting, setPosting] = useState(false);
   const [postResult, setPostResult] = useState<{ success?: boolean; job?: PostedJob; error?: string } | null>(null);
   const [revalidating, setRevalidating] = useState(false);
+  const [extractUrl, setExtractUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState("");
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -216,6 +219,33 @@ export default function AdminPage() {
       await fetch("/api/admin/revalidate", { method: "POST" });
     } catch {}
     setRevalidating(false);
+  }
+
+  async function handleExtract() {
+    if (!extractUrl.trim()) return;
+    setExtracting(true);
+    setExtractError("");
+    try {
+      const res = await fetch("/api/admin/extract-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: extractUrl }),
+      });
+      const data = await res.json();
+      if (res.ok && data.data) {
+        const d = data.data;
+        setRawText(
+          `${d.title}\n${d.company}\n${d.location}${d.salary ? "\n" + d.salary : ""}\n${d.experienceType}\n\n${d.snippet}`
+        );
+        setApplyLink(d.applyUrl || extractUrl);
+        setExtractUrl("");
+      } else {
+        setExtractError(data.error || "Failed to extract job details");
+      }
+    } catch {
+      setExtractError("Network error");
+    }
+    setExtracting(false);
   }
 
   async function handlePostJob() {
@@ -621,6 +651,40 @@ export default function AdminPage() {
         {/* Post Job Tab */}
         {tab === "post" && (
           <div className="px-6 py-6 flex flex-col gap-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Extract from URL</label>
+              <p className="text-xs text-gray-400 mb-2">Paste a LinkedIn or job posting URL to auto-fill the form.</p>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={extractUrl}
+                  onChange={(e) => setExtractUrl(e.target.value)}
+                  placeholder="https://www.linkedin.com/jobs/view/..."
+                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
+                />
+                <button
+                  onClick={handleExtract}
+                  disabled={extracting || !extractUrl.trim()}
+                  className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    extracting || !extractUrl.trim()
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  {extracting ? "Extracting..." : "Extract"}
+                </button>
+              </div>
+              {extractError && (
+                <p className="text-xs text-red-500 mt-2">{extractError}</p>
+              )}
+            </div>
+
+            <div className="relative flex items-center">
+              <div className="flex-1 border-t border-gray-200" />
+              <span className="px-3 text-xs text-gray-400">or paste manually</span>
+              <div className="flex-1 border-t border-gray-200" />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
               <p className="text-xs text-gray-400 mb-2">Paste the full job posting from LinkedIn, Greenhouse, etc.</p>
