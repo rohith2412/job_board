@@ -140,6 +140,13 @@ ${pageText}`;
     );
   }
 
+  if (!parsed.title || !parsed.company) {
+    return NextResponse.json(
+      { error: "Could not extract job details — the page may require JavaScript to load. Try pasting the job description manually." },
+      { status: 400 }
+    );
+  }
+
   return NextResponse.json({
     success: true,
     data: {

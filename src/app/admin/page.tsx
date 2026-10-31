@@ -139,6 +139,11 @@ export default function AdminPage() {
   const [extractUrl, setExtractUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [bulkJobs, setBulkJobs] = useState<{ url: string; data?: { title: string; company: string; location: string; salary: string; experienceType: string; snippet: string; applyUrl: string }; error?: string; posted?: boolean; postError?: string }[]>([]);
+  const [bulkExtracting, setBulkExtracting] = useState(false);
+  const [bulkPosting, setBulkPosting] = useState(false);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -246,6 +251,64 @@ export default function AdminPage() {
       setExtractError("Network error");
     }
     setExtracting(false);
+  }
+
+  async function handleBulkExtract() {
+    const urls = bulkUrls.split("\n").map(u => u.trim()).filter(u => u.length > 0);
+    if (urls.length === 0) return;
+    setBulkExtracting(true);
+    setBulkJobs([]);
+    const results: typeof bulkJobs = [];
+    for (const url of urls) {
+      try {
+        const res = await fetch("/api/admin/extract-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        if (res.ok && data.data) {
+          results.push({ url, data: data.data });
+        } else {
+          results.push({ url, error: data.error || "Failed to extract" });
+        }
+      } catch {
+        results.push({ url, error: "Network error" });
+      }
+      setBulkJobs([...results]);
+    }
+    setBulkExtracting(false);
+  }
+
+  async function handleBulkPost() {
+    setBulkPosting(true);
+    const updated = [...bulkJobs];
+    for (let i = 0; i < updated.length; i++) {
+      const job = updated[i];
+      if (!job.data || job.posted || job.error) continue;
+      try {
+        const rawText = `${job.data.title}\n${job.data.company}\n${job.data.location}${job.data.salary ? "\n" + job.data.salary : ""}\n${job.data.experienceType}\n\n${job.data.snippet}`;
+        const res = await fetch("/api/admin/post-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rawText, applyLink: job.data.applyUrl || job.url }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          updated[i] = { ...updated[i], posted: true };
+        } else {
+          updated[i] = { ...updated[i], postError: data.error || "Failed to post" };
+        }
+      } catch {
+        updated[i] = { ...updated[i], postError: "Network error" };
+      }
+      setBulkJobs([...updated]);
+    }
+    setBulkPosting(false);
+  }
+
+  function handleRemoveBulkJob(index: number) {
+    setBulkJobs(prev => prev.filter((_, i) => i !== index));
   }
 
   async function handlePostJob() {
@@ -652,99 +715,215 @@ export default function AdminPage() {
         {tab === "post" && (
           <div className="px-6 py-6 flex flex-col gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Extract from URL</label>
-              <p className="text-xs text-gray-400 mb-2">Paste a LinkedIn or job posting URL to auto-fill the form.</p>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={extractUrl}
-                  onChange={(e) => setExtractUrl(e.target.value)}
-                  placeholder="https://www.linkedin.com/jobs/view/..."
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
-                />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Extract from URL</label>
                 <button
-                  onClick={handleExtract}
-                  disabled={extracting || !extractUrl.trim()}
-                  className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                    extracting || !extractUrl.trim()
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
+                  onClick={() => { setBulkMode(!bulkMode); setBulkJobs([]); setBulkUrls(""); }}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
                 >
-                  {extracting ? "Extracting..." : "Extract"}
+                  {bulkMode ? "Single URL" : "Bulk Import"}
                 </button>
               </div>
-              {extractError && (
-                <p className="text-xs text-red-500 mt-2">{extractError}</p>
+
+              {!bulkMode ? (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">Paste a LinkedIn or job posting URL to auto-fill the form.</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={extractUrl}
+                      onChange={(e) => setExtractUrl(e.target.value)}
+                      placeholder="https://www.linkedin.com/jobs/view/..."
+                      className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
+                    />
+                    <button
+                      onClick={handleExtract}
+                      disabled={extracting || !extractUrl.trim()}
+                      className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                        extracting || !extractUrl.trim()
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    >
+                      {extracting ? "Extracting..." : "Extract"}
+                    </button>
+                  </div>
+                  {extractError && (
+                    <p className="text-xs text-red-500 mt-2">{extractError}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">Paste multiple URLs (one per line). AI will extract all jobs, then you can post them all at once.</p>
+                  <textarea
+                    value={bulkUrls}
+                    onChange={(e) => setBulkUrls(e.target.value)}
+                    placeholder={"https://www.linkedin.com/jobs/view/123...\nhttps://www.linkedin.com/jobs/view/456...\nhttps://www.linkedin.com/jobs/view/789..."}
+                    rows={5}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-y mb-3"
+                  />
+                  <button
+                    onClick={handleBulkExtract}
+                    disabled={bulkExtracting || !bulkUrls.trim()}
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                      bulkExtracting || !bulkUrls.trim()
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    {bulkExtracting
+                      ? `Extracting... (${bulkJobs.length}/${bulkUrls.split("\n").filter(u => u.trim()).length})`
+                      : `Extract All (${bulkUrls.split("\n").filter(u => u.trim()).length} URLs)`}
+                  </button>
+
+                  {bulkJobs.length > 0 && (
+                    <div className="mt-4 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Extracted Jobs ({bulkJobs.filter(j => j.data && !j.posted).length} ready)
+                        </p>
+                        {bulkJobs.some(j => j.posted) && (
+                          <p className="text-xs text-green-600 font-medium">
+                            {bulkJobs.filter(j => j.posted).length} posted
+                          </p>
+                        )}
+                      </div>
+                      {bulkJobs.map((job, i) => (
+                        <div
+                          key={i}
+                          className={`p-3 rounded-xl border text-sm ${
+                            job.posted
+                              ? "bg-green-50 border-green-200"
+                              : job.error || job.postError
+                              ? "bg-red-50 border-red-200"
+                              : "bg-white border-gray-100"
+                          }`}
+                        >
+                          {job.data ? (
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-gray-800 truncate">{job.data.title}</p>
+                                <p className="text-xs text-gray-500 truncate">{job.data.company} · {job.data.location}</p>
+                                {job.data.salary && <p className="text-xs text-gray-400">{job.data.salary}</p>}
+                                {job.posted && <p className="text-xs text-green-600 font-medium mt-1">Posted!</p>}
+                                {job.postError && <p className="text-xs text-red-500 mt-1">{job.postError}</p>}
+                              </div>
+                              {!job.posted && !bulkPosting && (
+                                <button
+                                  onClick={() => handleRemoveBulkJob(i)}
+                                  className="shrink-0 text-gray-400 hover:text-red-500 cursor-pointer p-1"
+                                  title="Remove"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-xs text-gray-500 truncate">{job.url}</p>
+                              <p className="text-xs text-red-500">{job.error}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {bulkJobs.some(j => j.data && !j.posted) && !bulkExtracting && (
+                        <button
+                          onClick={handleBulkPost}
+                          disabled={bulkPosting}
+                          className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black mt-2 ${
+                            bulkPosting
+                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
+                              : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
+                          }`}
+                        >
+                          {bulkPosting
+                            ? `Posting... (${bulkJobs.filter(j => j.posted).length}/${bulkJobs.filter(j => j.data).length})`
+                            : `Post All (${bulkJobs.filter(j => j.data && !j.posted).length} jobs)`}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            <div className="relative flex items-center">
-              <div className="flex-1 border-t border-gray-200" />
-              <span className="px-3 text-xs text-gray-400">or paste manually</span>
-              <div className="flex-1 border-t border-gray-200" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
-              <p className="text-xs text-gray-400 mb-2">Paste the full job posting from LinkedIn, Greenhouse, etc.</p>
-              <textarea
-                value={rawText}
-                onChange={(e) => setRawText(e.target.value)}
-                placeholder="Paste the entire job description here..."
-                rows={12}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-y"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Apply Link</label>
-              <input
-                type="url"
-                value={applyLink}
-                onChange={(e) => setApplyLink(e.target.value)}
-                placeholder="https://careers.company.com/job/..."
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
-              />
-            </div>
-
-            <button
-              onClick={handlePostJob}
-              disabled={posting || !rawText.trim() || !applyLink.trim()}
-              className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
-                posting || !rawText.trim() || !applyLink.trim()
-                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
-                  : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
-              }`}
-            >
-              {posting ? "Processing with AI..." : "Post Job"}
-            </button>
-
-            {postResult?.success && postResult.job && (
-              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                <p className="text-sm font-semibold text-green-800 mb-2">Job posted successfully!</p>
-                <div className="text-sm text-green-700 space-y-1">
-                  <p><span className="font-medium">Title:</span> {postResult.job.title}</p>
-                  <p><span className="font-medium">Company:</span> {postResult.job.company}</p>
-                  <p><span className="font-medium">Location:</span> {postResult.job.location}</p>
-                  {postResult.job.salary && <p><span className="font-medium">Salary:</span> {postResult.job.salary}</p>}
-                  <p><span className="font-medium">Type:</span> {postResult.job.experienceType}</p>
+            {!bulkMode && (
+              <>
+                <div className="relative flex items-center">
+                  <div className="flex-1 border-t border-gray-200" />
+                  <span className="px-3 text-xs text-gray-400">or paste manually</span>
+                  <div className="flex-1 border-t border-gray-200" />
                 </div>
-                <a
-                  href={`/jobs/${postResult.job.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-3 text-sm font-medium text-green-800 underline underline-offset-4"
-                >
-                  View job page
-                </a>
-              </div>
+              </>
             )}
 
-            {postResult?.error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200">
-                <p className="text-sm text-red-700">{postResult.error}</p>
-              </div>
+            {!bulkMode && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                  <p className="text-xs text-gray-400 mb-2">Paste the full job posting from LinkedIn, Greenhouse, etc.</p>
+                  <textarea
+                    value={rawText}
+                    onChange={(e) => setRawText(e.target.value)}
+                    placeholder="Paste the entire job description here..."
+                    rows={12}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Apply Link</label>
+                  <input
+                    type="url"
+                    value={applyLink}
+                    onChange={(e) => setApplyLink(e.target.value)}
+                    placeholder="https://careers.company.com/job/..."
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
+                  />
+                </div>
+
+                <button
+                  onClick={handlePostJob}
+                  disabled={posting || !rawText.trim() || !applyLink.trim()}
+                  className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
+                    posting || !rawText.trim() || !applyLink.trim()
+                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
+                      : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
+                  }`}
+                >
+                  {posting ? "Processing with AI..." : "Post Job"}
+                </button>
+
+                {postResult?.success && postResult.job && (
+                  <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                    <p className="text-sm font-semibold text-green-800 mb-2">Job posted successfully!</p>
+                    <div className="text-sm text-green-700 space-y-1">
+                      <p><span className="font-medium">Title:</span> {postResult.job.title}</p>
+                      <p><span className="font-medium">Company:</span> {postResult.job.company}</p>
+                      <p><span className="font-medium">Location:</span> {postResult.job.location}</p>
+                      {postResult.job.salary && <p><span className="font-medium">Salary:</span> {postResult.job.salary}</p>}
+                      <p><span className="font-medium">Type:</span> {postResult.job.experienceType}</p>
+                    </div>
+                    <a
+                      href={`/jobs/${postResult.job.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 text-sm font-medium text-green-800 underline underline-offset-4"
+                    >
+                      View job page
+                    </a>
+                  </div>
+                )}
+
+                {postResult?.error && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+                    <p className="text-sm text-red-700">{postResult.error}</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
