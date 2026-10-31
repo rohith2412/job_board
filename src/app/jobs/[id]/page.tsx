@@ -86,6 +86,16 @@ export default async function JobDetailPage({
     "Internship": "INTERN",
     "Co-op": "INTERN",
     "Contract": "CONTRACTOR",
+    "Part-time": "PART_TIME",
+  };
+
+  const getEmploymentType = () => {
+    if (employmentTypeMap[job.experienceType]) return employmentTypeMap[job.experienceType];
+    const combined = `${job.experienceType} ${job.title}`.toLowerCase();
+    if (/intern|co-op|coop/.test(combined)) return "INTERN";
+    if (/contract/.test(combined)) return "CONTRACTOR";
+    if (/part.?time/.test(combined)) return "PART_TIME";
+    return "FULL_TIME";
   };
 
   const canadianProvinces = ["ON", "BC", "QC", "AB", "MB", "SK", "NB", "NS", "PE", "NL", "YT", "NT", "NU"];
@@ -135,6 +145,10 @@ export default async function JobDetailPage({
       : undefined,
     ...(isRemote && {
       jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: {
+        "@type": "Country",
+        name: isCanada ? "CA" : "US",
+      },
     }),
     baseSalary: salaryData
       ? {
@@ -146,7 +160,7 @@ export default async function JobDetailPage({
           },
         }
       : undefined,
-    employmentType: employmentTypeMap[job.experienceType] || "FULL_TIME",
+    employmentType: getEmploymentType(),
     url: `https://www.reblet.com/jobs/${job.slug}`,
   };
 
