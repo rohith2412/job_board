@@ -29,7 +29,7 @@ function NavbarContent() {
                 <img
                   src={session.user.image}
                   alt={session.user.name || "Profile"}
-                  className="w-8 h-8 rounded-full hover:ring-2 hover:ring-gray-200 transition-all"
+                  className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-gray-200 transition-all"
                   referrerPolicy="no-referrer"
                 />
               ) : (

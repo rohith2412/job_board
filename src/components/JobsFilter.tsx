@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { formatSalary } from "@/lib/utils";
@@ -20,6 +20,8 @@ interface Job {
   description: string;
   applyUrl: string;
   logo: string;
+  postedByName?: string;
+  postedByImage?: string;
 }
 
 const DATE_OPTIONS = [
@@ -57,14 +59,14 @@ function Dropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+        className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
           value
             ? "bg-gray-900 text-white border-gray-900"
             : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
         }`}
       >
         {icon}
-        <span className="truncate max-w-[120px]">{value || label}</span>
+        <span className="truncate flex-1 text-left">{value || label}</span>
         <svg
           width="14"
           height="14"
@@ -141,7 +143,7 @@ function DateDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+        className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
           value
             ? "bg-gray-900 text-white border-gray-900"
             : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
@@ -153,7 +155,7 @@ function DateDropdown({
           <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
-        <span className="truncate max-w-[120px]">{selectedLabel || "Date Posted"}</span>
+        <span className="truncate flex-1 text-left">{selectedLabel || "Date Posted"}</span>
         <svg
           width="14"
           height="14"
@@ -261,6 +263,7 @@ function JobsFilterInner({
   currentPage,
   totalPages,
   totalJobs,
+  hasFilters,
 }: {
   jobs: Job[];
   locations: string[];
@@ -269,166 +272,213 @@ function JobsFilterInner({
   currentPage: number;
   totalPages: number;
   totalJobs: number;
+  hasFilters: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [search, setSearch] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState<number | null>(null);
-  const [remoteOnly, setRemoteOnly] = useState(false);
+
+  const selectedLocation = searchParams.get("location");
+  const selectedCompany = searchParams.get("company");
+  const selectedType = searchParams.get("type");
+  const remoteOnly = searchParams.get("remote") === "true";
+  const dateFilter = searchParams.get("date") ? parseInt(searchParams.get("date")!, 10) : null;
+  const searchParam = searchParams.get("q") || "";
+  const [searchInput, setSearchInput] = useState(searchParam);
+
+  const updateFilters = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === "") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+    const qs = params.toString();
+    router.push(qs ? `/jobs?${qs}` : "/jobs");
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (searchInput === searchParam) return;
+    const timer = setTimeout(() => {
+      updateFilters({ q: searchInput || null });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setSearchInput(searchParam);
+  }, [searchParam]);
+
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  useEffect(() => {
+    function updateView() {
+      setViewMode(window.innerWidth >= 640 ? "grid" : "list");
+    }
+    updateView();
+    window.addEventListener("resize", updateView);
+    return () => window.removeEventListener("resize", updateView);
+  }, []);
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) setFiltersOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => { setNow(Date.now()); }, []);
 
-  const filtered = useMemo(() => {
-    const currentTime = now ?? 0;
-    return jobs.filter((job) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
-        job.title.toLowerCase().includes(q) ||
-        job.company.toLowerCase().includes(q);
-
-      const matchesLocation =
-        !selectedLocation || job.location === selectedLocation;
-
-      const matchesCompany = !selectedCompany || job.company === selectedCompany;
-
-      const matchesType = !selectedType || job.experienceType === selectedType;
-
-      const matchesRemote =
-        !remoteOnly || job.location?.toLowerCase().includes("remote");
-
-      const matchesDate =
-        !dateFilter || !currentTime ||
-        (currentTime - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= dateFilter;
-
-      return matchesSearch && matchesLocation && matchesCompany && matchesType && matchesRemote && matchesDate;
-    });
-  }, [jobs, search, selectedLocation, selectedCompany, selectedType, remoteOnly, dateFilter, now]);
-
-  const hasFilters = search || selectedLocation || selectedCompany || selectedType || remoteOnly || dateFilter;
-  const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, search, dateFilter].filter(Boolean).length;
+  const activeCount = [selectedLocation, selectedCompany, selectedType, remoteOnly, dateFilter].filter(Boolean).length;
 
   return (
     <>
       <div className="border-b border-gray-100">
-        <div className="px-6 py-4 flex flex-col gap-3">
-          <div className="relative">
-            <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Job title, keyword, or company"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-10 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all bg-white"
-            />
-            {search && (
+        <div className="px-6 py-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Job title, keyword, or company"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full pl-12 pr-10 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all bg-white"
+              />
+              {searchInput && (
+                <button
+                  onClick={() => { setSearchInput(""); updateFilters({ q: null }); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <div ref={filtersRef} className="relative">
               <button
-                onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className={`flex items-center gap-2 px-4 py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer border whitespace-nowrap ${
+                  activeCount > 0
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                }`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
+                  <line x1="4" y1="6" x2="20" y2="6" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                  <line x1="11" y1="18" x2="13" y2="18" />
                 </svg>
+                Filters
+                {activeCount > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white text-gray-900 text-xs font-bold">
+                    {activeCount}
+                  </span>
+                )}
               </button>
-            )}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <DateDropdown value={dateFilter} onChange={setDateFilter} />
+              {filtersOpen && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-lg shadow-gray-100/50 z-50 p-4 flex flex-col gap-3">
+                  <DateDropdown value={dateFilter} onChange={(v) => updateFilters({ date: v ? String(v) : null })} />
 
-            <Dropdown
-              label="Location"
-              icon={
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              }
-              value={selectedLocation}
-              options={locations}
-              onChange={setSelectedLocation}
-            />
+                  <Dropdown
+                    label="Location"
+                    icon={
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    }
+                    value={selectedLocation}
+                    options={locations}
+                    onChange={(v) => updateFilters({ location: v })}
+                  />
 
-            <Dropdown
-              label="Company"
-              icon={
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                  <path d="M3 21h18" />
-                  <path d="M5 21V7l8-4v18" />
-                  <path d="M19 21V11l-6-4" />
-                </svg>
-              }
-              value={selectedCompany}
-              options={companies}
-              onChange={setSelectedCompany}
-            />
+                  <Dropdown
+                    label="Company"
+                    icon={
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        <path d="M3 21h18" />
+                        <path d="M5 21V7l8-4v18" />
+                        <path d="M19 21V11l-6-4" />
+                      </svg>
+                    }
+                    value={selectedCompany}
+                    options={companies}
+                    onChange={(v) => updateFilters({ company: v })}
+                  />
 
-            <Dropdown
-              label="Experience"
-              icon={
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                  <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-                </svg>
-              }
-              value={selectedType}
-              options={experienceTypes}
-              onChange={setSelectedType}
-            />
+                  <Dropdown
+                    label="Experience"
+                    icon={
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                        <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                      </svg>
+                    }
+                    value={selectedType}
+                    options={experienceTypes}
+                    onChange={(v) => updateFilters({ type: v })}
+                  />
 
-            <button
-              onClick={() => setRemoteOnly(!remoteOnly)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border whitespace-nowrap ${
-                remoteOnly
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-              Remote
-            </button>
+                  <button
+                    onClick={() => updateFilters({ remote: remoteOnly ? null : "true" })}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border whitespace-nowrap ${
+                      remoteOnly
+                        ? "bg-gray-900 text-white border-gray-900"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    Remote
+                  </button>
 
-            {hasFilters && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedLocation(null);
-                  setSelectedCompany(null);
-                  setSelectedType(null);
-                  setDateFilter(null);
-                  setRemoteOnly(false);
-                }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all cursor-pointer whitespace-nowrap"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
-                </svg>
-                Reset{activeCount > 1 ? ` (${activeCount})` : ""}
-              </button>
-            )}
+                  {hasFilters && (
+                    <button
+                      onClick={() => {
+                        setSearchInput("");
+                        router.push("/jobs");
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all cursor-pointer border border-red-200"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6L6 18" />
+                        <path d="M6 6l12 12" />
+                      </svg>
+                      Reset filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -437,13 +487,12 @@ function JobsFilterInner({
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             <span className="font-semibold text-gray-900">{totalJobs}</span>{" "}
-            {totalJobs === 1 ? "job" : "jobs"} available
+            {hasFilters ? (totalJobs === 1 ? "match" : "matches") : (totalJobs === 1 ? "job" : "jobs available")}
             {totalPages > 1 && ` · page ${currentPage} of ${totalPages}`}
-            {hasFilters && filtered.length < jobs.length && ` · ${filtered.length} matching`}
           </p>
         </div>
 
-        {filtered.length === 0 ? (
+        {jobs.length === 0 && hasFilters ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-5">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -459,12 +508,8 @@ function JobsFilterInner({
             </p>
             <button
               onClick={() => {
-                setSearch("");
-                setSelectedLocation(null);
-                setSelectedCompany(null);
-                setSelectedType(null);
-                setDateFilter(null);
-                setRemoteOnly(false);
+                setSearchInput("");
+                router.push("/jobs");
               }}
               className="text-sm font-medium text-gray-900 underline underline-offset-4 hover:text-gray-600 transition-colors cursor-pointer"
             >
@@ -473,8 +518,84 @@ function JobsFilterInner({
           </div>
         ) : (
           <>
+          {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {jobs.map((job) => (
+              <div
+                key={job.slug}
+                className="relative rounded-xl border border-gray-100 overflow-hidden"
+              >
+                <div
+                  onClick={() => session ? router.push(`/jobs/${job.slug}`) : undefined}
+                  role="link"
+                  className={`group block p-4 sm:p-5 h-full transition-all ${session ? "cursor-pointer hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50" : "blur-[2px] opacity-60 select-none pointer-events-none"}`}
+                >
+                  <div className="flex flex-col gap-3 h-full">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm text-gray-500 font-medium truncate">{job.company}</span>
+                      {job.source === "company" && (
+                        <span className="text-[10px] font-semibold text-green-700 bg-green-200/60 px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider">
+                          Hiring
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-2 leading-snug">
+                      {job.title}
+                    </h3>
+                    <div className="flex flex-col gap-1.5 mt-auto">
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span className="truncate">{job.location}</span>
+                      </span>
+                      {job.salary && (
+                        <span className="text-sm font-semibold text-gray-900">{formatSalary(job.salary)}</span>
+                      )}
+                      <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-100">
+                        <p className="text-xs text-gray-400">
+                          {now ? timeAgo(job.createdAt, now) : ""}
+                        </p>
+                        {session ? (
+                          <ApplyButton link={job.link} />
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-300 text-black text-xs font-semibold border-2 border-black shadow-[0_3px_0_0_#000] flex-shrink-0">
+                            Apply
+                          </span>
+                        )}
+                      </div>
+                      {job.postedByName && (
+                        <div className="flex items-center gap-1.5 pt-1.5">
+                          {job.postedByImage ? (
+                            <img src={job.postedByImage} alt="" className="w-4 h-4 rounded-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-semibold text-gray-500">
+                              {job.postedByName[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-[11px] text-gray-400 truncate">Shared by {job.postedByName}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {!session && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px] rounded-xl">
+                    <button
+                      onClick={() => signIn("google", { callbackUrl: window.location.href })}
+                      className="cursor-pointer hover:opacity-90 transition-opacity"
+                    >
+                      <img src="/google-signin-button.svg" alt="Sign in with Google" className="h-10" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          ) : (
           <div className="flex flex-col gap-2.5">
-            {filtered.map((job) =>
+            {jobs.map((job) =>
               job.source === "company" ? (
                 <div
                   key={job.slug}
@@ -565,6 +686,18 @@ function JobsFilterInner({
                           </span>
                         )}
                       </div>
+                      {job.postedByName && (
+                        <div className="flex items-center gap-1.5 pt-1.5">
+                          {job.postedByImage ? (
+                            <img src={job.postedByImage} alt="" className="w-4 h-4 rounded-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-semibold text-gray-500">
+                              {job.postedByName[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-[11px] text-gray-400 truncate">Shared by {job.postedByName}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {!session && (
@@ -627,6 +760,18 @@ function JobsFilterInner({
                         </span>
                       )}
                     </div>
+                    {job.postedByName && (
+                      <div className="flex items-center gap-1.5 px-4 sm:px-5 pb-3 -mt-1">
+                        {job.postedByImage ? (
+                          <img src={job.postedByImage} alt="" className="w-4 h-4 rounded-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-semibold text-gray-500">
+                            {job.postedByName[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-[11px] text-gray-400 truncate">Shared by {job.postedByName}</span>
+                      </div>
+                    )}
                   </div>
                   {!session && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px] rounded-xl">
@@ -642,12 +787,13 @@ function JobsFilterInner({
               )
             )}
           </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-4 pb-2">
               {currentPage > 1 ? (
                 <Link
-                  href={currentPage === 2 ? "/jobs" : `/jobs?page=${currentPage - 1}`}
+                  href={(() => { const p = new URLSearchParams(searchParams.toString()); if (currentPage === 2) p.delete("page"); else p.set("page", String(currentPage - 1)); const qs = p.toString(); return qs ? `/jobs?${qs}` : "/jobs"; })()}
                   scroll={true}
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
                 >
@@ -669,7 +815,7 @@ function JobsFilterInner({
               </span>
               {currentPage < totalPages ? (
                 <Link
-                  href={`/jobs?page=${currentPage + 1}`}
+                  href={(() => { const p = new URLSearchParams(searchParams.toString()); p.set("page", String(currentPage + 1)); return `/jobs?${p.toString()}`; })()}
                   scroll={true}
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
                 >
@@ -703,6 +849,7 @@ export default function JobsFilter({
   currentPage,
   totalPages,
   totalJobs,
+  hasFilters,
 }: {
   jobs: Job[];
   locations: string[];
@@ -711,10 +858,10 @@ export default function JobsFilter({
   currentPage: number;
   totalPages: number;
   totalJobs: number;
+  hasFilters: boolean;
 }) {
   return (
     <JobsFilterInner
-      key={currentPage}
       jobs={jobs}
       locations={locations}
       companies={companies}
@@ -722,6 +869,7 @@ export default function JobsFilter({
       currentPage={currentPage}
       totalPages={totalPages}
       totalJobs={totalJobs}
+      hasFilters={hasFilters}
     />
   );
 }

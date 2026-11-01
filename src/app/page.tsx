@@ -39,7 +39,7 @@ export default async function Home() {
           {jobs.length} open roles · updated daily
         </p>
 
-        <h1 className="text-[2.5rem] sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1] mb-5 text-center">
+        <h1 className="text-[2.5rem] sm:text-6xl font-light text-gray-900 tracking-tight leading-[1.1] mb-5 text-center">
           SWE internship &<br />
           new grad jobs,<br />
           <span className="text-gray-400">every single day</span>

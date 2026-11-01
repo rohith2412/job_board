@@ -61,9 +61,22 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
+    async jwt({ token, trigger }) {
+      if (trigger === "update") {
+        await connectDB();
+        const dbUser = await User.findOne({ email: token.email }).lean();
+        if (dbUser) {
+          token.name = (dbUser as any).name;
+          token.picture = (dbUser as any).image;
+        }
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string;
       }
       return session;
     },

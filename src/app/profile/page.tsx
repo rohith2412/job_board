@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 const REGION_LABELS: Record<string, string> = {
@@ -17,9 +17,17 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 function ProfileContent() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
   const [region, setRegion] = useState<string>("");
   const [regionLoading, setRegionLoading] = useState(true);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editImage, setEditImage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -34,6 +42,54 @@ function ProfileContent() {
       })
       .catch(() => setRegionLoading(false));
   }, [status]);
+
+  function startEditing() {
+    setEditName(session?.user?.name || "");
+    setEditImage(session?.user?.image || "");
+    setSaveError("");
+    setEditing(true);
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setSaveError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "avatars");
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setEditImage(data.url);
+    } catch (err: any) {
+      setSaveError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, image: editImage }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      await updateSession();
+      setEditing(false);
+      window.location.reload();
+    } catch (err: any) {
+      setSaveError(err.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (status === "loading" || regionLoading) {
     return (
@@ -91,12 +147,86 @@ function ProfileContent() {
     <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
         <div className="flex-1 px-6 py-10 flex flex-col gap-8">
+          {editing ? (
+            <div className="flex flex-col gap-5 p-5 rounded-2xl border border-gray-200 bg-gray-50/50">
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  {editImage ? (
+                    <img
+                      src={editImage}
+                      alt="Preview"
+                      className="w-20 h-20 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-2xl font-semibold text-gray-400">
+                      {editName?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploading ? (
+                      <svg className="w-6 h-6 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeLinecap="round" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    )}
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    maxLength={100}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 bg-white"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">{user?.email}</p>
+                </div>
+              </div>
+              {saveError && (
+                <p className="text-sm text-red-500">{saveError}</p>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving || uploading || !editName.trim()}
+                  className="px-5 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  disabled={saving}
+                  className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
           <div className="flex items-center gap-5">
             {user?.image ? (
               <img
                 src={user.image}
                 alt={user.name || "Profile"}
-                className="w-20 h-20 rounded-full"
+                className="w-20 h-20 rounded-full object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
@@ -104,7 +234,7 @@ function ProfileContent() {
                 {user?.name?.[0]?.toUpperCase() || "?"}
               </div>
             )}
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-bold text-gray-900">
                 {user?.name}
               </h1>
@@ -113,7 +243,18 @@ function ProfileContent() {
                 {REGION_LABELS[region] || region}
               </p>
             </div>
+            <button
+              onClick={startEditing}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all cursor-pointer"
+              title="Edit profile"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
           </div>
+          )}
 
           <Link
             href="/rank"

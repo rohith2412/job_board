@@ -2,6 +2,49 @@ import { cacheLife } from "next/cache";
 import { connectDB } from "./mongodb";
 import { SavedJob } from "@/models/SavedJob";
 import { Company } from "@/models/Company";
+import { User } from "@/models/User";
+
+export interface JobFilters {
+  search?: string;
+  location?: string;
+  company?: string;
+  experienceType?: string;
+  remote?: boolean;
+  dateDays?: number;
+}
+
+function buildFilterQuery(filters: JobFilters) {
+  const query: any = { featured: true };
+
+  if (filters.search) {
+    const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    query.$or = [
+      { title: { $regex: escaped, $options: "i" } },
+      { company: { $regex: escaped, $options: "i" } },
+    ];
+  }
+
+  if (filters.location) {
+    query.location = filters.location;
+  } else if (filters.remote) {
+    query.location = { $regex: /remote/i };
+  }
+
+  if (filters.company) {
+    query.company = filters.company;
+  }
+
+  if (filters.experienceType) {
+    query.experienceType = filters.experienceType;
+  }
+
+  if (filters.dateDays) {
+    const cutoff = new Date(Date.now() - filters.dateDays * 24 * 60 * 60 * 1000);
+    query.createdAt = { $gte: cutoff };
+  }
+
+  return query;
+}
 
 export async function getJobBySlug(slug: string) {
   "use cache";
@@ -44,11 +87,12 @@ export async function getCompanyLogos(): Promise<Record<string, string>> {
   return JSON.parse(JSON.stringify(map));
 }
 
-export async function getPaginatedFeaturedJobs(page: number, pageSize: number) {
+export async function getPaginatedFeaturedJobs(page: number, pageSize: number, filters: JobFilters = {}) {
   "use cache";
   cacheLife("minutes");
   await connectDB();
-  const jobs = await SavedJob.find({ featured: true })
+  const query = buildFilterQuery(filters);
+  const jobs = await SavedJob.find(query)
     .sort({ createdAt: -1 })
     .skip((page - 1) * pageSize)
     .limit(pageSize)
@@ -56,11 +100,12 @@ export async function getPaginatedFeaturedJobs(page: number, pageSize: number) {
   return JSON.parse(JSON.stringify(jobs));
 }
 
-export async function getFeaturedJobsCount() {
+export async function getFeaturedJobsCount(filters: JobFilters = {}) {
   "use cache";
   cacheLife("minutes");
   await connectDB();
-  return SavedJob.countDocuments({ featured: true });
+  const query = buildFilterQuery(filters);
+  return SavedJob.countDocuments(query);
 }
 
 export async function getJobFilterOptions() {
@@ -77,6 +122,19 @@ export async function getJobFilterOptions() {
     companies: (companies as string[]).sort(),
     types: (types as string[]).filter(Boolean).sort(),
   }));
+}
+
+export async function getJobPosters(emails: string[]): Promise<Record<string, { name: string; image: string }>> {
+  "use cache";
+  cacheLife("minutes");
+  if (emails.length === 0) return {};
+  await connectDB();
+  const users = await User.find({ email: { $in: emails } }).select("email name image").lean();
+  const map: Record<string, { name: string; image: string }> = {};
+  for (const u of users) {
+    map[(u as any).email] = { name: (u as any).name, image: (u as any).image || "" };
+  }
+  return JSON.parse(JSON.stringify(map));
 }
 
 export async function getAdjacentJobs(slug: string) {
