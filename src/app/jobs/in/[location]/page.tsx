@@ -5,11 +5,11 @@ import { getJobFilterOptions } from "@/lib/data";
 
 export const instant = false;
 
-function unslugify(slug: string): string {
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+function extractCity(location: string): string {
+  return location
+    .replace(/\s*\(.*?\)\s*/g, "")
+    .split(",")[0]
+    .trim();
 }
 
 function slugify(text: string): string {
@@ -19,11 +19,22 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+function citySlug(location: string): string {
+  return slugify(extractCity(location));
+}
+
 export async function generateStaticParams() {
   const options = await getJobFilterOptions();
-  return options.locations.slice(0, 30).map((loc: string) => ({
-    location: slugify(loc),
-  }));
+  const seen = new Set<string>();
+  const params: { location: string }[] = [];
+  for (const loc of options.locations) {
+    const slug = citySlug(loc);
+    if (!slug || slug === "remote" || seen.has(slug)) continue;
+    seen.add(slug);
+    params.push({ location: slug });
+    if (params.length >= 30) break;
+  }
+  return params;
 }
 
 export async function generateMetadata({
@@ -32,7 +43,12 @@ export async function generateMetadata({
   params: Promise<{ location: string }>;
 }): Promise<Metadata> {
   const { location } = await params;
-  const city = unslugify(location);
+  const options = await getJobFilterOptions();
+  const matched = options.locations.find(
+    (loc: string) => citySlug(loc) === location
+  );
+  const city = matched ? extractCity(matched) : location.split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
   return {
     title: `Software Engineering Jobs in ${city} | Reblet`,
     description: `SWE internships and full-time roles in ${city}. Salary info included where available.`,
@@ -59,17 +75,18 @@ export default async function LocationJobsPage({
   const { location } = await params;
   const options = await getJobFilterOptions();
 
-  const matchedLocation = options.locations.find(
-    (loc: string) => slugify(loc) === location
+  const matched = options.locations.find(
+    (loc: string) => citySlug(loc) === location
   );
 
-  if (!matchedLocation) notFound();
+  if (!matched) notFound();
 
-  const city = unslugify(location);
+  const city = extractCity(matched);
+  const escaped = city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   return (
     <FilteredJobsPage
-      filters={{ location: matchedLocation }}
+      filters={{ location: `^${escaped}` }}
       searchParams={searchParams}
       heading={`SWE Jobs in ${city}`}
       subheading={`SWE internships and full-time roles in ${city}.`}

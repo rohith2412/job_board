@@ -25,7 +25,11 @@ function buildFilterQuery(filters: JobFilters) {
   }
 
   if (filters.location) {
-    query.location = filters.location;
+    if (filters.location.startsWith("^")) {
+      query.location = { $regex: filters.location, $options: "i" };
+    } else {
+      query.location = filters.location;
+    }
   } else if (filters.remote) {
     query.location = { $regex: /remote/i };
   }

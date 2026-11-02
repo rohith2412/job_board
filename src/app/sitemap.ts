@@ -94,14 +94,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  const locationPages: MetadataRoute.Sitemap = filterOptions.locations
-    .slice(0, 50)
-    .map((location: string) => ({
-      url: `https://www.reblet.com/jobs/in/${slugify(location)}`,
+  const seenCitySlugs = new Set<string>();
+  const locationPages: MetadataRoute.Sitemap = [];
+  for (const location of filterOptions.locations) {
+    const city = location.replace(/\s*\(.*?\)\s*/g, "").split(",")[0].trim();
+    const cs = slugify(city);
+    if (!cs || cs === "remote" || seenCitySlugs.has(cs)) continue;
+    seenCitySlugs.add(cs);
+    locationPages.push({
+      url: `https://www.reblet.com/jobs/in/${cs}`,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 0.6,
-    }));
+    });
+    if (locationPages.length >= 50) break;
+  }
 
   return [...staticPages, ...jobPages, ...companyPages, ...locationPages];
 }
