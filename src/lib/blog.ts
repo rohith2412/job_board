@@ -135,6 +135,69 @@ The conversion rate from application to offer is somewhere around 2–5%. That m
 It's easy to go hard for two weeks and then stop. Set a small daily target - like 3 applications and 1 LeetCode problem - and actually stick to it. Consistency beats intensity. Most people who are actively searching land something within a couple months.`,
   },
   {
+    slug: "side-projects-that-actually-get-you-hired",
+    title: "Side Projects That Actually Get You Hired",
+    description:
+      "Not all projects are created equal. Here's what hiring managers actually notice on your resume.",
+    date: "2026-11-02",
+    readTime: "6 min read",
+    content: `You've probably heard that you need side projects on your resume. That's true. But there's a massive gap between "I followed a YouTube tutorial and made a weather app" and "I built something that a hiring manager actually wants to talk about in an interview."
+
+Let's close that gap.
+
+## Why most projects don't help you
+
+Recruiters see thousands of resumes. Most of them have the same handful of projects: a to-do app, a calculator, a portfolio website, a CRUD app with React and Node. These technically count as projects, but they don't tell the recruiter anything about you that they couldn't assume about every other CS student.
+
+The bar isn't "can you code?" It's "can you solve a real problem, make decisions about trade-offs, and ship something that works?"
+
+## What actually stands out
+
+**Projects that solve a real problem you had.** The best projects come from scratching your own itch. If you built a tool because you needed it — a Chrome extension that blocks distracting subreddits during study hours, a script that scrapes your university's course catalog and alerts you when a seat opens — that story writes itself in the interview. You can explain the why, not just the what.
+
+**Projects with users.** Even five real users puts you ahead of 95% of applicants. Deploy it. Share it. Put a link on your resume. If someone other than you has used your thing, that shows you can ship software that other people can actually figure out, which is literally the job.
+
+**Projects that use infra.** A React app running locally is one thing. A React app deployed on Vercel with a Postgres database, auth, and a CI pipeline? Now you're demonstrating that you understand how real software works. You don't need to overcomplicate it — just going from "runs on my laptop" to "runs on the internet with real data" is a meaningful step.
+
+## Project ideas worth building
+
+If you're stuck for ideas, here are a few categories that tend to produce good resume material:
+
+### Developer tools
+Build something that makes developers' lives easier. A VS Code extension, a CLI tool, a GitHub Action. These tend to be small enough to finish in a few weekends but interesting enough to talk about. Bonus: other developers might actually use them.
+
+### Data projects
+Scrape an interesting dataset, clean it, and build something on top of it. A dashboard that tracks housing prices in your city. A tool that analyzes your Spotify listening history. An API that serves data about something niche you care about. Data projects show you can handle the messy reality of real-world information.
+
+### Full-stack apps with auth
+Pick a problem and build the whole thing. A study group finder for your university. A split-the-bill app. A workout tracker that does something Strava doesn't. Use a database, add login, deploy it. These are the closest thing to the actual work you'd do at a job.
+
+### Open source contributions
+Contributing to an existing open source project shows you can read someone else's code, navigate a large codebase, and work within established patterns. You don't need to land a massive feature — fixing a bug or improving docs for a well-known project still counts and still impresses.
+
+## How to present them
+
+Your resume bullet should focus on impact and decisions, not technologies:
+
+**Weak:** "Built a web app using React, Node.js, Express, and MongoDB"
+
+**Strong:** "Built a course seat tracker that monitors 2,000+ classes and texts students when spots open — used by 300 students at UMD"
+
+See the difference? The second one tells a story. It has a number, a real use case, and an implied technical challenge (monitoring, notifications, scale).
+
+## The one-project rule
+
+You don't need five projects. You need one good one. If you spend a semester going deep on a single project — iterating on it, getting users, fixing bugs, adding features — that's worth more than five half-finished tutorials.
+
+In interviews, depth beats breadth. Being able to talk for ten minutes about the design decisions, trade-offs, and bugs in one project is way more impressive than having a shallow explanation of five.
+
+## Where to share
+
+Put the live URL on your resume. Put the GitHub link on your resume. If the project has a landing page, even better. Make it trivially easy for someone reviewing your resume to go from reading about your project to seeing it live.
+
+Check out the [new grad jobs page](/jobs/new-grad) and [internships page](/jobs/internships) to find roles worth applying to once your resume is in shape.`,
+  },
+  {
     slug: "companies-still-hiring-swe-interns-november-2026",
     title: "Companies Still Hiring SWE Interns (November 2026)",
     description:

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllFeaturedJobs, getJobFilterOptions } from "@/lib/data";
 import { slugifyCompany } from "@/lib/utils";
+import { getAllPosts } from "@/lib/blog";
 
 function slugify(text: string): string {
   return text
@@ -110,5 +111,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (locationPages.length >= 50) break;
   }
 
-  return [...staticPages, ...jobPages, ...companyPages, ...locationPages];
+  const blogPages: MetadataRoute.Sitemap = getAllPosts().map((post) => ({
+    url: `https://www.reblet.com/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+  }));
+
+  return [...staticPages, ...jobPages, ...companyPages, ...locationPages, ...blogPages];
 }
