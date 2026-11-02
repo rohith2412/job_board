@@ -87,9 +87,9 @@ export default async function BlogPostPage({
 
         <div className="mt-16 pt-8 border-t border-gray-100">
           <p className="text-gray-500 text-sm">
-            Looking for SWE jobs?{" "}
+            Currently looking?{" "}
             <Link href="/jobs" className="text-green-600 font-medium hover:underline">
-              Browse open roles on Reblet
+              Check out what's posted on Reblet
             </Link>
           </p>
         </div>

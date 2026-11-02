@@ -12,52 +12,54 @@ export const posts: BlogPost[] = [
     slug: "best-swe-internships-summer-2027",
     title: "Best Software Engineering Internships for Summer 2027",
     description:
-      "A curated guide to the top SWE internships for Summer 2027 — where to apply, what they pay, and how to stand out.",
+      "Which internships pay the most, when apps open, and what actually gets you the offer.",
     date: "2026-11-01",
     readTime: "5 min read",
-    content: `Landing a software engineering internship at a top company can launch your career. Here's what you need to know about the best SWE internships for Summer 2027.
+    content: `Every year around August, the SWE internship rush begins. If you're a sophomore or junior trying to lock down a Summer 2027 spot, the window is already open — and some of the best-paying ones close fast.
 
-## Top-Paying SWE Internships
+## Who's paying the most?
 
-The highest-paying software engineering internships consistently come from big tech and finance:
+Intern pay varies wildly. Some companies pay $25/hr, others pay more than most people's first full-time salary. These are the ones that consistently pay the highest:
 
-- **Google** — $55/hr+ in Mountain View, with housing stipend
-- **Meta** — $52/hr+ in Menlo Park, with relocation assistance
-- **Jane Street** — $60/hr+ in NYC, one of the highest-paying internships
-- **Stripe** — $55/hr+ in San Francisco, with great mentorship
-- **Amazon** — $50/hr+ across multiple locations
+- **Jane Street** — $60/hr+ in NYC. Probably the single highest-paying internship you can get. Extremely competitive.
+- **Google** — $55/hr+ in Mountain View. They also throw in a housing stipend, which matters when Bay Area rent is $3K/month.
+- **Stripe** — $55/hr+ in SF. Smaller intern class, so you actually get real mentorship instead of being one of 3,000 interns.
+- **Meta** — $52/hr+ in Menlo Park. Relocation package included.
+- **Amazon** — $50/hr+ across a bunch of locations. Probably the easiest of these to get into — they hire a lot of interns.
 
-## When to Apply
+## Application timelines
 
-Most big tech companies open their Summer 2027 internship applications in **August–October 2026**. Some key timelines:
+This catches people off guard every year. Quant firms and trading shops open apps in **August**. By the time you hear about it in November, half the spots are already gone.
 
-- **Early bird** (Aug–Sep): Jane Street, Two Sigma, Citadel
-- **Peak season** (Sep–Nov): Google, Meta, Amazon, Microsoft
-- **Rolling** (Oct–Feb): Startups, mid-size companies
+- **Aug–Sep**: Jane Street, Two Sigma, Citadel (these fill up quick)
+- **Sep–Nov**: Google, Meta, Amazon, Microsoft
+- **Oct–Feb**: Startups and mid-size companies — still great roles, just less name recognition
 
-## How to Stand Out
+## Actually getting the offer
 
-1. **Build projects** — Ship something real. A deployed web app beats a tutorial project.
-2. **Practice DSA** — LeetCode medium-level problems are the standard.
-3. **Apply broadly** — Don't just aim for FAANG. Companies like Stripe, Databricks, and Ramp have excellent intern programs.
-4. **Get referrals** — A referral can move your application to the top of the pile.
+Forget trying to optimize your LinkedIn profile. The stuff that actually moves the needle:
 
-## Where to Find Internships
+1. **Have a real project** — Not a to-do app from a tutorial. Deploy something. Even if it's small, having a live URL you can point to separates you from 90% of applicants.
+2. **Grind LeetCode** — Nobody loves it, but mediums are the standard. You need to be comfortable solving them in 25 minutes.
+3. **Don't only apply to FAANG** — Stripe, Databricks, Ramp, and a bunch of other companies have great intern programs. Less competition too.
+4. **Get referrals where you can** — A referral won't get you the job, but it will get your resume looked at instead of filtered out by some ATS.
 
-Reblet curates the best SWE internship postings daily. Browse our [internship listings](/jobs/internships) to find roles that match your skills and location.`,
+## Where to look
+
+We post internship openings on Reblet as we find them — check [the internships page](/jobs/internships) if you want to skip the noise of LinkedIn and Handshake.`,
   },
   {
     slug: "new-grad-software-engineer-salary-guide-2027",
     title: "New Grad Software Engineer Salary Guide 2027",
     description:
-      "What new grad software engineers earn in 2027 — base salary, stock, bonus, and total compensation at top companies.",
+      "A breakdown of what new grad software engineers actually make in 2027 — base, stock, bonus, and the stuff nobody tells you about negotiation.",
     date: "2026-10-28",
     readTime: "6 min read",
-    content: `If you're graduating in 2027 and entering the software engineering job market, here's what you can expect to earn.
+    content: `Everyone asks "what's the TC?" but nobody gives you a straight answer. So here's a real breakdown of what new grads are making at the big companies in 2027, based on what people are reporting on Levels.fyi and Blind.
 
-## Average New Grad SWE Compensation
+## The numbers
 
-Total compensation (TC) for new grad software engineers at top companies in 2027:
+These are total comp figures — base + stock + bonus, annualized. Your actual offer will depend on team, location, and how well you negotiate.
 
 | Company | Base Salary | Stock/yr | Bonus | Total Comp |
 |---------|-----------|---------|-------|-----------|
@@ -68,69 +70,69 @@ Total compensation (TC) for new grad software engineers at top companies in 2027
 | Apple (ICT2) | $125K | $30K | $15K | $170K |
 | Stripe | $130K | $40K | $10K | $180K |
 
-*Note: These are approximate figures based on publicly reported data. Actual offers vary by location, experience, and negotiation.*
+A few notes: Amazon's stock vesting is backloaded (5/15/40/40), so Year 1 TC is lower than what's shown here. Microsoft doesn't do signing bonuses at the 59 level anymore. Meta's stock has been volatile, so that $50K/yr number swings a lot.
 
-## Factors That Affect Your Offer
+## What actually affects your offer
 
-**Location matters.** Bay Area and NYC roles pay 15–30% more than other cities, but cost of living is significantly higher. Remote roles typically pay based on a national band.
+**Where you work** — A Google offer in Mountain View is going to be 15–30% higher than the same role in Raleigh. But SF rent is $3K+ for a studio, so do the math before you get excited about a Bay Area number.
 
-**Company stage matters.** Early-stage startups may offer lower base salary but more equity upside. Large companies offer more predictable compensation.
+**Big company vs. startup** — Big tech comp is predictable. You know what you're getting. Startups might offer $100K base with a chunk of equity that could be worth a lot or literally nothing. Depends on your risk tolerance.
 
-**Negotiation matters.** Most new grads don't negotiate, but you should. Having competing offers is the strongest lever.
+**Whether you negotiate** — Most new grads just accept the first number. Don't do that. You don't need to be aggressive about it — just having another offer and saying so is usually enough to bump your stock grant or get a signing bonus.
 
-## How to Maximize Your Offer
+## Getting a better offer
 
-1. **Apply to multiple companies** — competing offers give you leverage
-2. **Know your market rate** — use Levels.fyi and Glassdoor for data
-3. **Negotiate** — ask for more stock or a signing bonus if base is fixed
-4. **Consider total compensation** — don't fixate on base salary alone
+1. **Have competing offers** — This is by far the most effective thing. Two offers from similar companies and suddenly both of them want to pay you more.
+2. **Check Levels.fyi** — Know what the band is for your role before you talk numbers.
+3. **Ask for stock or a signing bonus** — Base salary bands are usually rigid. Stock and signing bonuses are where there's room.
+4. **Look at the full picture** — $140K at Microsoft with low cost of living in Seattle might leave you with more money than $185K at Meta in Menlo Park.
 
-Browse [new grad SWE jobs](/jobs/new-grad) on Reblet to start your search.`,
+We list full-time SWE roles on the [new grad jobs page](/jobs/new-grad) — worth bookmarking if you're still looking.`,
   },
   {
     slug: "how-to-land-first-software-engineering-job",
     title: "How to Land Your First Software Engineering Job",
     description:
-      "A practical guide for CS students and bootcamp grads on getting your first SWE job — resume tips, interview prep, and job search strategy.",
+      "What actually works when you're trying to get your first SWE job — from someone who's been through it.",
     date: "2026-10-25",
     readTime: "7 min read",
-    content: `Getting your first software engineering job is the hardest part of your career. Here's a practical guide to make it happen.
+    content: `The first job is the hardest one to get. After that, everything gets easier because you have experience on your resume. But getting from zero to one is rough, and a lot of the advice out there is either too vague or written by people who haven't applied to a job in 15 years.
 
-## Build a Strong Resume
+## Your resume
 
-Your resume is your first impression. For new grads:
+Keep it one page. Seriously. Nobody is reading page two.
 
-- **Lead with projects**, not coursework. Hiring managers want to see what you've built.
-- **Quantify impact.** "Built a React app" is weak. "Built a React app serving 500 daily users with 99.9% uptime" is strong.
-- **Keep it to one page.** No exceptions for new grads.
-- **Use a clean format.** No fancy templates — ATS systems can't read them.
+- **Projects go first, not coursework.** A class project counts if you actually built something — but "completed CS 101" tells a recruiter nothing. If you built a web app, deployed it, and people used it, that's what goes at the top.
+- **Add numbers.** "Built a React app" is boring. "Built a React app that 500 people use daily" — now you have my attention. Even rough numbers are better than none.
+- **Plain formatting.** Those fancy two-column resume templates with icons and progress bars? ATS software can't parse them. Use a simple single-column layout. Jake's Resume template on Overleaf is a safe bet.
 
-## Prepare for Interviews
+## Interview prep
 
-Most SWE interviews follow this pattern:
+Most tech interviews look roughly the same:
 
-1. **Phone screen** — 30–45 min coding problem (LeetCode easy/medium)
-2. **Technical rounds** — 2–4 rounds of DSA, system design (for senior), and coding
-3. **Behavioral** — "Tell me about a time..." questions about teamwork and problem-solving
+1. **Recruiter call** — 30 min, mostly behavioral, checking if you're a real person
+2. **Technical screen** — 45 min LeetCode-style problem, usually easy-to-medium difficulty
+3. **Onsite (or virtual onsite)** — 3–5 rounds of coding, maybe one system design if it's a more senior role, and a behavioral round
 
-### Study Plan
+### How to study
 
-- **Weeks 1–4:** Learn patterns (sliding window, two pointers, BFS/DFS, dynamic programming)
-- **Weeks 5–8:** Practice 2–3 problems daily on LeetCode
-- **Weeks 9–12:** Mock interviews with friends or platforms like Pramp
+Don't just randomly grind LeetCode. That's a waste of time.
 
-## Job Search Strategy
+- **First month**: Learn the patterns. Sliding window, two pointers, BFS/DFS, basic DP. Neetcode.io has a good roadmap for this.
+- **Second month**: Do 2–3 problems a day. Focus on mediums. If you can consistently solve a medium in 25 minutes, you're in good shape.
+- **Third month**: Do mock interviews. Practice talking through your solution out loud — that's the part most people skip and it's the part that trips them up in the actual interview.
 
-- **Apply early.** Most companies fill new grad roles on a rolling basis — earlier is better.
-- **Cast a wide net.** Apply to 50+ companies. The conversion rate from application to offer is typically 2–5%.
-- **Don't ignore smaller companies.** Startups and mid-size companies often have less competitive hiring and excellent learning opportunities.
-- **Use niche job boards.** General boards like LinkedIn are noisy. Curated boards like [Reblet](/jobs) surface the best roles for new grads and interns.
+## The job search itself
 
-## Stay Consistent
+The conversion rate from application to offer is somewhere around 2–5%. That means if you apply to 50 places, you might get 1–3 offers. That's normal. Don't take rejection personally — it's a volume game.
 
-Job hunting is a numbers game. Set a daily goal (5 applications, 2 LeetCode problems) and stick to it. Most successful job seekers find their role within 2–3 months of active searching.
+- **Apply early** — Most companies do rolling admissions for new grad roles. The spots fill up. Applying in January for a role that opened in September means you're competing for fewer seats.
+- **Don't sleep on mid-size companies** — Everyone applies to Google and Meta. Not everyone applies to Datadog, Cloudflare, or Ramp. Less competition, and honestly some of these places have better engineering cultures than Big Tech.
+- **LinkedIn job search is noisy** — You'll see the same 200-applicant postings everyone else sees. Smaller job boards that focus on SWE roles ([like this one](/jobs)) tend to have less noise.
 
-Start browsing [SWE jobs](/jobs) on Reblet — we add new roles daily.`,
+## Don't burn out
+
+It's easy to go hard for two weeks and then stop. Set a small daily target — like 3 applications and 1 LeetCode problem — and actually stick to it. Consistency beats intensity. Most people who are actively searching land something within a couple months.`,
   },
 ];
 

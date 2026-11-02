@@ -3,13 +3,13 @@ import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "Blog | Reblet — SWE Career Tips & Job Search Advice",
+  title: "Blog | Reblet",
   description:
-    "Career advice for software engineers — internship guides, salary data, interview tips, and job search strategies for new grads and interns.",
+    "Internship guides, salary breakdowns, and job search advice for software engineers.",
   openGraph: {
-    title: "Reblet Blog — SWE Career Tips & Job Search Advice",
+    title: "Reblet Blog",
     description:
-      "Career advice, salary guides, and job search strategies for software engineers.",
+      "Internship guides, salary breakdowns, and job search advice for software engineers.",
     type: "website",
     url: "https://www.reblet.com/blog",
     siteName: "Reblet",
@@ -29,8 +29,8 @@ export default function BlogPage() {
           Blog
         </h1>
         <p className="text-gray-500 mt-3 text-base">
-          Career advice, salary guides, and job search tips for software
-          engineers.
+          Internship guides, salary breakdowns, and job search stuff we
+          wish someone told us earlier.
         </p>
 
         <div className="mt-12 flex flex-col gap-10">

@@ -6,11 +6,11 @@ export const instant = false;
 export const metadata: Metadata = {
   title: "Software Engineering Internships 2027 | Reblet",
   description:
-    "Find the best software engineering internships for Summer 2027. Browse SWE intern roles at Google, Amazon, Meta, Stripe and more top tech companies. Updated daily.",
+    "SWE internship openings at Google, Amazon, Meta, Stripe, and other tech companies. We add new ones as we find them.",
   openGraph: {
     title: "Software Engineering Internships 2027",
     description:
-      "Find the best software engineering internships for Summer 2027. Updated daily.",
+      "SWE internship openings at tech companies. New roles added regularly.",
     type: "website",
     url: "https://www.reblet.com/jobs/internships",
     siteName: "Reblet",
@@ -30,7 +30,7 @@ export default function InternshipsPage({
       filters={{ experienceType: "Internship" }}
       searchParams={searchParams}
       heading="Software Engineering Internships"
-      subheading="SWE internship openings at top tech companies, updated daily."
+      subheading="Internship openings at tech companies. We add new ones as we find them."
     />
   );
 }

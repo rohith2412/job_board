@@ -6,11 +6,11 @@ export const instant = false;
 export const metadata: Metadata = {
   title: "New Grad Software Engineer Jobs 2027 | Reblet",
   description:
-    "Browse new grad software engineering jobs for 2027. Entry-level SWE positions at top companies with salary info. No experience required. Updated daily.",
+    "Full-time software engineering roles for recent grads. We pull from company career pages so you don't have to.",
   openGraph: {
     title: "New Grad Software Engineer Jobs 2027",
     description:
-      "Entry-level software engineering positions at top companies. Updated daily.",
+      "Full-time SWE roles for recent grads and entry-level engineers.",
     type: "website",
     url: "https://www.reblet.com/jobs/new-grad",
     siteName: "Reblet",
@@ -30,7 +30,7 @@ export default function NewGradPage({
       filters={{ experienceType: "Full-time" }}
       searchParams={searchParams}
       heading="New Grad Software Engineer Jobs"
-      subheading="Entry-level SWE positions for recent graduates, updated daily."
+      subheading="Full-time roles for recent grads and entry-level engineers."
     />
   );
 }

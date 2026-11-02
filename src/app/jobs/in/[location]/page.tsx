@@ -35,10 +35,10 @@ export async function generateMetadata({
   const city = unslugify(location);
   return {
     title: `Software Engineering Jobs in ${city} | Reblet`,
-    description: `Find software engineering internships and new grad jobs in ${city}. Browse SWE roles with salary info. Updated daily.`,
+    description: `SWE internships and full-time roles in ${city}. Salary info included where available.`,
     openGraph: {
       title: `Software Engineering Jobs in ${city}`,
-      description: `SWE internships and new grad jobs in ${city}. Updated daily.`,
+      description: `SWE internships and full-time roles in ${city}.`,
       type: "website",
       url: `https://www.reblet.com/jobs/in/${location}`,
       siteName: "Reblet",
@@ -72,7 +72,7 @@ export default async function LocationJobsPage({
       filters={{ location: matchedLocation }}
       searchParams={searchParams}
       heading={`SWE Jobs in ${city}`}
-      subheading={`Software engineering internships and new grad roles in ${city}.`}
+      subheading={`SWE internships and full-time roles in ${city}.`}
     />
   );
 }

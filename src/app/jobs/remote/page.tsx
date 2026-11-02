@@ -6,11 +6,11 @@ export const instant = false;
 export const metadata: Metadata = {
   title: "Remote Software Engineering Jobs | Reblet",
   description:
-    "Find remote software engineering jobs and work-from-home SWE positions. Intern and new grad remote roles at top tech companies. Updated daily.",
+    "Remote SWE jobs you can do from anywhere. Intern and new grad roles included.",
   openGraph: {
     title: "Remote Software Engineering Jobs",
     description:
-      "Remote SWE jobs and work-from-home positions. Updated daily.",
+      "Remote SWE jobs you can do from anywhere.",
     type: "website",
     url: "https://www.reblet.com/jobs/remote",
     siteName: "Reblet",
@@ -30,7 +30,7 @@ export default function RemotePage({
       filters={{ remote: true }}
       searchParams={searchParams}
       heading="Remote Software Engineering Jobs"
-      subheading="Work-from-home SWE positions for interns and new grads."
+      subheading="SWE roles you can do from anywhere. Intern and full-time."
     />
   );
 }
