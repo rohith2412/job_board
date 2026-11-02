@@ -15,10 +15,10 @@ export default function WelcomePage() {
       return;
     }
     if (status === "authenticated") {
-      fetch("/api/user/consent")
+      fetch("/api/user/consent", { cache: "no-store" })
         .then((r) => r.json())
         .then((data) => {
-          if (data.consented) router.replace("/jobs");
+          if (data.consented || data.hasRecord) router.replace("/jobs");
         })
         .catch(() => {});
     }

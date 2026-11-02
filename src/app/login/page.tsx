@@ -45,7 +45,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/welcome");
+    router.push(isSignUp ? "/welcome" : "/jobs");
   }
 
   return (

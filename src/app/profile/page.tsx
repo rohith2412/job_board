@@ -38,8 +38,8 @@ function ProfileContent() {
       return;
     }
     Promise.all([
-      fetch("/api/user/region").then((r) => r.json()),
-      fetch("/api/user/consent").then((r) => r.json()),
+      fetch("/api/user/region", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/user/consent", { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([regionData, consentData]) => {
         setRegion(regionData.region || "");
