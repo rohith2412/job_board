@@ -1,11 +1,32 @@
 "use client";
 
-import { SessionProvider as NextAuthSessionProvider } from "next-auth/react";
+import {
+  SessionProvider as NextAuthSessionProvider,
+  SessionContext,
+} from "next-auth/react";
+import { useEffect, useState } from "react";
+
+const fallbackSession = {
+  data: null,
+  status: "loading" as const,
+  update: async () => null as any,
+};
 
 export default function SessionProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <SessionContext.Provider value={fallbackSession}>
+        {children}
+      </SessionContext.Provider>
+    );
+  }
+
   return <NextAuthSessionProvider>{children}</NextAuthSessionProvider>;
 }
