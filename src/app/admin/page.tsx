@@ -743,7 +743,19 @@ export default function AdminPage() {
         {tab === "email" && (
           <div className="px-6 py-6 flex flex-col gap-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-1">Send Job Alerts</h2>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-sm font-semibold text-gray-900">Send Job Alerts</h2>
+                <button
+                  onClick={() => {
+                    fetch("/api/admin/users").then(r => r.json()).then(data => {
+                      if (data.users) setUsers(data.users);
+                    }).catch(() => {});
+                  }}
+                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  Refresh
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mb-4">
                 Email the latest 5 jobs to all users who agreed to receive emails.
               </p>
