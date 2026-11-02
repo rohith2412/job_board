@@ -125,14 +125,14 @@ export default async function JobDetailPage({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
-    title: job.title,
-    description: snippet,
+    title: job.title || "Software Engineering Position",
+    description: snippet || job.title || "Software engineering role",
     datePosted: postedDate,
     validThrough,
     hiringOrganization: {
       "@type": "Organization",
-      name: job.company,
-      sameAs: `https://www.reblet.com/companies/${companySlug}`,
+      name: job.company || "Unknown",
+      ...(job.company && { sameAs: `https://www.reblet.com/companies/${companySlug}` }),
     },
     jobLocation: job.location
       ? {
