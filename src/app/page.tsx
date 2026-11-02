@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAllFeaturedJobs } from "@/lib/data";
 
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Reblet | SWE Internship & New Grad Job Openings Daily",
   description:
