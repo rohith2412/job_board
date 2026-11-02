@@ -24,6 +24,7 @@ export async function GET() {
     lastLoginCity: (u as any).lastLoginCity || "",
     lastLoginCountry: (u as any).lastLoginCountry || "",
     lastLoginRegion: (u as any).lastLoginRegion || "",
+    emailConsent: !!(u as any).emailConsent,
     hasPassword: !!u.password,
     createdAt: u.createdAt,
   }));

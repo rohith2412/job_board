@@ -15,6 +15,7 @@ interface User {
   lastLoginCity?: string;
   lastLoginCountry?: string;
   lastLoginRegion?: string;
+  emailConsent?: boolean;
   createdAt: string;
 }
 
@@ -82,7 +83,7 @@ const COUNTRY_NAMES: Record<string, string> = {
   NL: "Netherlands",
 };
 
-type Tab = "analytics" | "users" | "jobs" | "ratings" | "post";
+type Tab = "analytics" | "users" | "jobs" | "ratings" | "post" | "email";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "analytics", label: "Analytics", icon: "chart" },
@@ -90,6 +91,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "jobs", label: "Jobs", icon: "briefcase" },
   { key: "ratings", label: "Ratings", icon: "star" },
   { key: "post", label: "Post Job", icon: "plus" },
+  { key: "email", label: "Email", icon: "mail" },
 ];
 
 function TabIcon({ icon }: { icon: string }) {
@@ -105,6 +107,8 @@ function TabIcon({ icon }: { icon: string }) {
       return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
     case "plus":
       return <svg {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+    case "mail":
+      return <svg {...props}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" /></svg>;
     default:
       return null;
   }
@@ -147,6 +151,8 @@ export default function AdminPage() {
   const [bulkJobs, setBulkJobs] = useState<{ url: string; data?: { title: string; company: string; location: string; salary: string; experienceType: string; snippet: string; applyUrl: string }; error?: string; posted?: boolean; postError?: string }[]>([]);
   const [bulkExtracting, setBulkExtracting] = useState(false);
   const [bulkPosting, setBulkPosting] = useState(false);
+  const [sendingAlerts, setSendingAlerts] = useState(false);
+  const [alertResult, setAlertResult] = useState<{ sent?: number; total?: number; errors?: string[]; message?: string } | null>(null);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -219,6 +225,20 @@ export default function AdminPage() {
       if (res.ok) setRatings((prev) => prev.filter((r) => r._id !== id));
     } catch {}
     setDeletingRating(null);
+  }
+
+  async function handleSendAlerts() {
+    if (!confirm("Send job alert emails to all consented users?")) return;
+    setSendingAlerts(true);
+    setAlertResult(null);
+    try {
+      const res = await fetch("/api/admin/send-alerts", { method: "POST" });
+      const data = await res.json();
+      setAlertResult(data);
+    } catch {
+      setAlertResult({ message: "Network error" });
+    }
+    setSendingAlerts(false);
   }
 
   async function handleRevalidate() {
@@ -716,6 +736,90 @@ export default function AdminPage() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Email Tab */}
+        {tab === "email" && (
+          <div className="px-6 py-6 flex flex-col gap-5">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="text-sm font-semibold text-gray-900 mb-1">Send Job Alerts</h2>
+              <p className="text-xs text-gray-500 mb-4">
+                Email the latest 5 jobs to all users who agreed to receive emails.
+              </p>
+
+              <div className="flex flex-wrap gap-3 mb-5">
+                <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex-1 min-w-[120px]">
+                  <p className="text-lg font-bold text-gray-900">{users.length}</p>
+                  <p className="text-[10px] text-gray-500">Total users</p>
+                </div>
+                <div className="p-3 rounded-xl bg-green-50 border border-green-100 flex-1 min-w-[120px]">
+                  <p className="text-lg font-bold text-green-700">{users.filter(u => u.emailConsent).length}</p>
+                  <p className="text-[10px] text-green-600">Consented to emails</p>
+                </div>
+              </div>
+
+              {users.filter(u => u.emailConsent).length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-2">Recipients</p>
+                  <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                    {users.filter(u => u.emailConsent).map((user, i) => (
+                      <div key={i} className="flex items-center gap-2 py-1">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                        <span className="text-xs text-gray-700">{user.name}</span>
+                        <span className="text-[10px] text-gray-400">{user.email}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleSendAlerts}
+                disabled={sendingAlerts || users.filter(u => u.emailConsent).length === 0}
+                className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
+                  sendingAlerts || users.filter(u => u.emailConsent).length === 0
+                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
+                    : "bg-green-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
+                }`}
+              >
+                {sendingAlerts
+                  ? "Sending..."
+                  : `Send to ${users.filter(u => u.emailConsent).length} users`}
+              </button>
+
+              {alertResult && (
+                <div className={`mt-4 p-4 rounded-xl border ${
+                  alertResult.sent && alertResult.sent > 0
+                    ? "bg-green-50 border-green-200"
+                    : "bg-yellow-50 border-yellow-200"
+                }`}>
+                  {alertResult.sent !== undefined ? (
+                    <>
+                      <p className={`text-sm font-semibold ${alertResult.sent > 0 ? "text-green-800" : "text-yellow-800"}`}>
+                        {alertResult.sent > 0
+                          ? `Sent to ${alertResult.sent} of ${alertResult.total} users`
+                          : alertResult.message || "No emails sent"}
+                      </p>
+                      {alertResult.errors && alertResult.errors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-red-600 mb-1">Errors:</p>
+                          {alertResult.errors.map((err, i) => (
+                            <p key={i} className="text-xs text-red-500">{err}</p>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-yellow-800">{alertResult.message}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
