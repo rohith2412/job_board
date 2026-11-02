@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getAllFeaturedJobs } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -20,6 +23,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const session = await getServerSession(authOptions);
+  if (session) redirect("/jobs");
+
   const jobs = await getAllFeaturedJobs();
 
   const previewJobs = jobs.slice(0, 4) as {
@@ -74,7 +80,7 @@ export default async function Home() {
         </Link>
       </section>
 
-      {/* Job preview — show real listings */}
+      {/* Job preview - show real listings */}
       <section className="mx-auto max-w-2xl px-6 pb-20">
         <div className="rounded-xl border border-gray-200 overflow-hidden shadow-lg shadow-gray-200/60">
           {/* Safari-style title bar */}
@@ -133,7 +139,7 @@ export default async function Home() {
               </div>
               <h3 className="text-sm font-bold text-gray-900 mb-1">New roles daily</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Fresh internship and new grad listings added every day — see them before they hit the big boards.
+                Fresh internship and new grad listings added every day - see them before they hit the big boards.
               </p>
             </div>
             <div>
