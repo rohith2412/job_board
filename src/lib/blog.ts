@@ -244,6 +244,168 @@ We add new internship postings to Reblet as we find them. The [internships page]
 
 The recruiting cycle isn't over just because r/csMajors says it is. Keep applying.`,
   },
+  {
+    slug: "remote-vs-in-office-new-grad",
+    title: "Remote vs In-Office: What New Grads Should Actually Pick",
+    description:
+      "The remote vs office debate hits different when you have zero years of experience. Here's the honest trade-off.",
+    date: "2026-10-20",
+    readTime: "5 min read",
+    content: `Every new grad job posting now has a little tag: Remote, Hybrid, or On-site. And you probably have a strong opinion about which one you want. But the honest answer for most new grads is more nuanced than "remote is always better."
+
+## The case for going in
+
+This isn't a boomer take. Here's the reality:
+
+**You learn faster in person.** When you're stuck on something and the senior engineer is ten feet away, you can ask a quick question and get unstuck in two minutes. Over Slack, that same question might take an hour to get answered — or you burn two hours going down the wrong path because you didn't want to "bother" anyone.
+
+**You build relationships that matter.** The people you work with early in your career become your professional network for the next decade. It's a lot easier to build those relationships over lunch than over Zoom calls with cameras off.
+
+**You get more visibility.** Promotions and interesting projects tend to go to people that managers actually know. When you're remote, you have to be much more intentional about making your work visible. In the office, some of that happens naturally.
+
+## The case for remote
+
+**Money.** A remote job at a Bay Area company while living in Austin or Denver means you pocket a massive cost-of-living difference. Some companies adjust pay by location, but many don't — and even adjusted remote pay in a low-cost city often goes further than full pay in SF.
+
+**Focus time.** Open offices are loud. If you do your best work in long uninterrupted blocks, remote is hard to beat. You can set up your own space exactly how you want it.
+
+**No commute.** Getting two hours of your day back is real. That time compounds — over a year, you're getting back an entire month of waking hours.
+
+## The honest recommendation
+
+If this is your first job out of school, **lean toward in-person or hybrid for at least the first year.** The learning acceleration is real and it compounds. You'll ramp up faster, build stronger relationships, and have a much easier time figuring out how a real engineering org works.
+
+After that first year, when you know what you're doing and have a network in place, go fully remote if you want. You'll have the context to be effective independently.
+
+## The exception
+
+If the remote job is at a meaningfully better company — better engineering culture, better comp, more interesting problems — take the remote job. Company quality matters more than location policy. A great remote job beats a mediocre in-office one every time.
+
+Browse [remote SWE roles](/jobs/remote) or [all jobs](/jobs) on Reblet to see what's out there.`,
+  },
+  {
+    slug: "technical-interview-mistakes-to-avoid",
+    title: "Technical Interview Mistakes Everyone Makes",
+    description:
+      "The mistakes that cost you offers aren't the ones you think. Most of them happen before you write a single line of code.",
+    date: "2026-10-15",
+    readTime: "6 min read",
+    content: `You studied LeetCode for months. You can solve mediums. You feel ready. Then you bomb an interview and have no idea what went wrong. Sound familiar?
+
+Most interview failures aren't about not knowing the algorithm. They're about everything around the code — how you communicate, how you handle being stuck, and how you manage your time. Here are the mistakes that actually cost people offers.
+
+## Jumping straight into code
+
+This is the number one mistake. You hear the problem and immediately start typing. The interviewer wanted you to:
+
+1. Ask clarifying questions
+2. Talk through your approach
+3. Confirm the approach makes sense
+4. Then code
+
+When you skip steps 1–3, you might solve the problem perfectly and still get a "no hire" because the interviewer couldn't tell if you understood what you were doing or got lucky.
+
+**Fix:** Spend the first 3–5 minutes talking. Repeat the problem back. Ask about edge cases. Say "I'm thinking about using X approach because of Y" and wait for a nod before you start coding.
+
+## Going silent
+
+When you're stuck, your instinct is to go quiet and think. The interviewer interprets silence as "they have no idea what they're doing."
+
+**Fix:** Think out loud. Say "I'm considering whether a hash map or sorting would be better here" or "I'm stuck on the edge case where the array is empty — let me think about that." The interviewer might even give you a hint if they can see where your thinking went wrong.
+
+## Not managing time
+
+A 45-minute interview is actually about 35 minutes of coding time (after intros and questions at the end). If you're still working on the brute force solution at minute 25, you're not going to have time for the optimal one.
+
+**Fix:** If you can't see the optimal solution in 3 minutes, code the brute force fast and then optimize. A working brute force plus a verbal explanation of how you'd optimize beats an incomplete optimal solution every time.
+
+## Ignoring edge cases
+
+You solve the main case, say "done," and the interviewer asks "what if the input is empty?" and your code crashes.
+
+**Fix:** Before you say you're done, test your code mentally with: empty input, single element, duplicates, negative numbers, and the largest possible input. Literally walk through your code with a simple example. This takes 60 seconds and catches most bugs.
+
+## Over-engineering the solution
+
+Sometimes the problem is simpler than you think. If the input size is small (n < 1000), a brute force O(n²) solution is fine. You don't need to invent a novel algorithm for everything.
+
+**Fix:** Ask about input constraints. "What's the expected size of the input?" changes whether you need an O(n) solution or if O(n log n) is perfectly fine. Interviewers respect engineers who consider practical constraints.
+
+## Being defensive about mistakes
+
+The interviewer points out a bug. You get flustered and defensive. This is natural but it's a bad look.
+
+**Fix:** Say "good catch, let me fix that." That's it. Interviewers expect bugs — they're looking at how you respond to feedback, not whether your first draft is perfect. Being coachable is literally on the rubric at most companies.
+
+## Not preparing behavioral answers
+
+You crushed the coding round and then stumble through "tell me about a time you disagreed with a teammate." Behavioral rounds matter more than people think, especially at companies like Amazon where they weight Leadership Principles heavily.
+
+**Fix:** Prepare 4–5 stories from school, internships, or projects that cover: conflict, failure, leadership, a technical decision, and something you're proud of. Use the STAR format (Situation, Task, Action, Result) to keep them structured and under 2 minutes each.
+
+## The meta-mistake
+
+The biggest mistake is treating interviews as a test you either pass or fail. They're a conversation. The interviewer wants to hire you — their day is better when a candidate does well. Approach it like you're pair-programming with a colleague, not performing for a judge.
+
+Ready to put this into practice? Check out the latest [SWE jobs](/jobs) and [internships](/jobs/internships) on Reblet.`,
+  },
+  {
+    slug: "how-to-use-linkedin-for-swe-jobs",
+    title: "How to Actually Use LinkedIn to Get a SWE Job",
+    description:
+      "LinkedIn is noisy, but it still works if you use it right. Here's what to do and what to skip.",
+    date: "2026-10-10",
+    readTime: "5 min read",
+    content: `LinkedIn gets a lot of hate from developers. The feed is full of humble-brag posts and "I'm thrilled to announce" spam. But here's the thing — it still works for getting jobs. You just have to use it differently than most people do.
+
+## Your profile
+
+Most LinkedIn profiles are bad. They read like a copy-paste of a resume, which itself was probably bad. Here's what actually matters:
+
+**Headline:** Don't just put "Computer Science Student at State University." Put what you want to do: "Software Engineer | CS @ State University | Building tools with React and Python." Recruiters search by keywords, and your headline is the first thing they see.
+
+**About section:** Two or three sentences. What you're into, what you're looking for, and one thing that makes you interesting. Not a wall of text. Not your life story.
+
+**Experience:** Same rules as your resume — projects first, impact-focused bullets, include numbers where you can. But on LinkedIn you have more room, so you can add a bit more context than a resume bullet.
+
+**Skills section:** Add every relevant technology. Recruiters filter by skills. If you know Python but it's not in your skills section, you won't show up in their search. It takes two minutes to add 15 skills.
+
+## Finding jobs
+
+The LinkedIn job board is... fine. It's not the best and it's not the worst. The problem is that every popular posting has 200+ applicants within 48 hours.
+
+**Use filters aggressively.** Set the date to "Past week" to find fresh postings. Filter by experience level (Entry level, Internship). Filter by location if you care about it.
+
+**Set up job alerts.** Search for "software engineer new grad" or "software engineering intern," then click the bell icon to get daily emails with new matches. This is actually LinkedIn's most useful feature — you see postings before they get 500 applicants.
+
+**Check company pages directly.** If there are 10 companies you really want to work at, follow them and check their LinkedIn job tabs regularly. Sometimes postings show up on company pages before they hit the main job board.
+
+## Networking (without being weird about it)
+
+The word "networking" makes developers cringe, but it doesn't have to mean sending cold DMs that say "Hello sir/ma'am, I am very interested in your company."
+
+**Connect after real interactions.** Met someone at a career fair? Attended a tech talk? Had someone review your PR in open source? Connect with them and mention the context. That's it. Don't pitch anything.
+
+**Message recruiters at companies you've applied to.** After you apply, find the recruiter for that team and send a short message: "Hi [Name], I just applied to the [Role] position. I'm a CS senior at [School] with experience in [relevant thing]. I'd love to chat if the role is still open." This actually works — recruiters get measured on hires, so they want to hear from qualified candidates.
+
+**Don't spam.** Don't send the same message to 50 people. Don't ask strangers for referrals without any prior interaction. Don't post engagement-bait content. These approaches burn bridges faster than they build them.
+
+## What to skip
+
+**LinkedIn Learning.** Your time is better spent on LeetCode, building projects, or reading actual documentation.
+
+**"Open to Work" banner.** Controversial take, but the green banner can sometimes signal desperation to recruiters. Instead, use the private "Open to Work" setting — it shows your status to recruiters but not to your network.
+
+**Commenting on viral posts.** Unless you genuinely have something to add, don't comment on posts just to get visibility. Recruiters aren't scanning comment sections.
+
+**Premium.** Probably not worth it as a student or new grad. The InMail credits are the only useful feature, and you can usually find recruiter emails through other channels.
+
+## The bottom line
+
+LinkedIn is a tool, not a strategy. Use it to make yourself findable, apply to jobs early, and make warm connections — then close the tab and go back to actually preparing for interviews.
+
+For a less noisy alternative, check out [Reblet's job board](/jobs) — we curate SWE roles for interns and new grads specifically, so you skip the noise.`,
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
