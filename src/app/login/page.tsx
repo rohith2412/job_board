@@ -45,7 +45,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/jobs");
+    router.push("/welcome");
   }
 
   return (
@@ -66,12 +66,12 @@ export default function LoginPage() {
         </h1>
         <p className="text-sm text-gray-500 text-center mb-8">
           {isSignUp
-            ? "Join thousands of job seekers finding their next role"
-            : "Welcome back! Browse curated software engineering jobs"}
+            ? "Sign up and we'll email you when new jobs match your profile."
+            : "We'll email you when new jobs match your profile."}
         </p>
 
         <button
-          onClick={() => signIn("google", { callbackUrl: "/jobs" })}
+          onClick={() => signIn("google", { callbackUrl: "/welcome" })}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer mb-6"
         >
           <svg width="18" height="18" viewBox="0 0 48 48">

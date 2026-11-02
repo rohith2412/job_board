@@ -12,6 +12,9 @@ interface User {
   image: string;
   password?: boolean;
   region?: string;
+  lastLoginCity?: string;
+  lastLoginCountry?: string;
+  lastLoginRegion?: string;
   createdAt: string;
 }
 
@@ -562,6 +565,11 @@ export default function AdminPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      {(user.lastLoginCity || user.lastLoginCountry) && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {[user.lastLoginCity, user.lastLoginRegion, user.lastLoginCountry ? (COUNTRY_NAMES[user.lastLoginCountry] || user.lastLoginCountry) : ""].filter(Boolean).join(", ")}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] text-gray-400">
                           {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

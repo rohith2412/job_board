@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PageTracker from "@/components/PageTracker";
+import LocationTracker from "@/components/LocationTracker";
 import CookieConsent from "@/components/CookieConsent";
 import RatePromo from "@/components/RatePromo";
 import SessionProvider from "@/components/SessionProvider";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Navbar />
           <RatePromo />
           <Suspense fallback={null}><PageTracker /></Suspense>
+          <LocationTracker />
           {children}
           <Footer />
           <CookieConsent />

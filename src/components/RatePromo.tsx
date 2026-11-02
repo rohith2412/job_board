@@ -61,12 +61,15 @@ export default function RatePromo() {
           <h2 className="text-[22px] font-bold text-gray-900 text-center leading-tight tracking-tight">
             Join Reblet for free
           </h2>
+          <p className="text-sm text-gray-500 text-center mt-2">
+            We&apos;ll email you when new jobs match your profile.
+          </p>
         </div>
 
         <div className="px-6 pb-8 flex flex-col items-center gap-3">
           <div className="w-full max-w-[250px] flex flex-col gap-3">
             <button
-              onClick={() => { dismiss(); signIn("google", { callbackUrl: "/jobs" }); }}
+              onClick={() => { dismiss(); signIn("google", { callbackUrl: "/welcome" }); }}
               className="w-full h-[52px] flex items-center justify-center gap-3 rounded-full border border-gray-400 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
             >
               <svg width="20" height="20" viewBox="0 0 48 48">

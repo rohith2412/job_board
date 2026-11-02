@@ -21,6 +21,9 @@ export async function GET() {
     name: u.name,
     image: u.image,
     region: u.region,
+    lastLoginCity: (u as any).lastLoginCity || "",
+    lastLoginCountry: (u as any).lastLoginCountry || "",
+    lastLoginRegion: (u as any).lastLoginRegion || "",
     hasPassword: !!u.password,
     createdAt: u.createdAt,
   }));
