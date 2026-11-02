@@ -28,19 +28,29 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [emailConsent, setEmailConsent] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(true);
+  const [emailSaving, setEmailSaving] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") {
       setRegionLoading(false);
       return;
     }
-    fetch("/api/user/region")
-      .then((r) => r.json())
-      .then((data) => {
-        setRegion(data.region || "");
+    Promise.all([
+      fetch("/api/user/region").then((r) => r.json()),
+      fetch("/api/user/consent").then((r) => r.json()),
+    ])
+      .then(([regionData, consentData]) => {
+        setRegion(regionData.region || "");
+        setEmailConsent(!!consentData.consented);
         setRegionLoading(false);
+        setEmailLoading(false);
       })
-      .catch(() => setRegionLoading(false));
+      .catch(() => {
+        setRegionLoading(false);
+        setEmailLoading(false);
+      });
   }, [status]);
 
   function startEditing() {
@@ -417,6 +427,57 @@ function ProfileContent() {
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </Link>
+          </div>
+
+          <div className="h-px bg-gray-100" />
+
+          <div className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+              Email Preferences
+            </h2>
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-base font-medium text-gray-800">Job alert emails</span>
+                  <p className="text-xs text-gray-400 mt-0.5">Receive new job openings in your inbox</p>
+                </div>
+              </div>
+              {emailLoading ? (
+                <div className="w-11 h-6 rounded-full bg-gray-100 animate-pulse" />
+              ) : (
+                <button
+                  onClick={async () => {
+                    setEmailSaving(true);
+                    const next = !emailConsent;
+                    try {
+                      await fetch("/api/user/consent", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ consented: next }),
+                      });
+                      setEmailConsent(next);
+                    } catch {}
+                    setEmailSaving(false);
+                  }}
+                  disabled={emailSaving}
+                  className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
+                    emailConsent ? "bg-green-500" : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      emailConsent ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="h-px bg-gray-100" />

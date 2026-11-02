@@ -4,19 +4,27 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let consented = true;
+  try {
+    const body = await req.json();
+    if (typeof body.consented === "boolean") consented = body.consented;
+  } catch {
+    // no body = default to true (backwards compatible with welcome page)
+  }
+
   await connectDB();
   await User.updateOne(
     { email: session.user.email },
-    { emailConsent: true }
+    { emailConsent: consented }
   );
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, consented });
 }
 
 export async function GET() {
