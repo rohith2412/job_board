@@ -108,6 +108,7 @@ export async function POST() {
       });
 
       sent++;
+      if (sent < users.length) await new Promise((r) => setTimeout(r, 150));
     } catch (err) {
       const email = (user as { email: string }).email;
       errors.push(`${email}: ${err instanceof Error ? err.message : "Unknown error"}`);
