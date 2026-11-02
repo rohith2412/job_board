@@ -8,6 +8,8 @@ import ApplyButton from "@/components/ApplyButton";
 import AuthApplyButton from "@/components/AuthApplyButton";
 import AuthJobCard from "@/components/AuthJobCard";
 import JobDescription from "@/components/JobDescription";
+import SharePrompt from "@/components/SharePrompt";
+import ShareButton from "@/components/ShareButton";
 
 export async function generateStaticParams() {
   const jobs = await getAllFeaturedJobs();
@@ -221,7 +223,7 @@ export default async function JobDetailPage({
                           className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
                         />
                       )}
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <Link
                           href={`/companies/${companySlug}`}
                           className="text-base font-semibold text-gray-700 hover:text-gray-500 transition-colors"
@@ -241,6 +243,7 @@ export default async function JobDetailPage({
                           {job.createdAt && <PostedTime date={job.createdAt} />}
                         </div>
                       </div>
+                      <ShareButton title={job.title} company={job.company} slug={id} />
                     </div>
 
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight break-words">
@@ -262,6 +265,7 @@ export default async function JobDetailPage({
                         href={job.applyUrl || job.link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        data-apply-btn
                         className="mt-2 flex items-center justify-center gap-3 w-full py-3 sm:py-4 rounded-full transition-all text-black text-base sm:text-lg font-semibold border-2 border-black bg-green-300 shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
                       >
                         Apply
@@ -272,6 +276,7 @@ export default async function JobDetailPage({
                     )}
                   </div>
                 </AuthJobCard>
+                <SharePrompt title={job.title} company={job.company} slug={id} />
 
                 {/* Right arrow - hidden on mobile */}
                 {adjacent.next ? (
