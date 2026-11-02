@@ -77,7 +77,9 @@ export async function POST() {
         html: `
           <div style="max-width: 560px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff;">
             <div style="padding: 24px 0; border-bottom: 2px solid #111827;">
-              <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #111827;">Reblet</h1>
+              <a href="${origin}" style="text-decoration: none;">
+                <img src="${origin}/favicon.png" alt="Reblet" width="36" height="36" style="display: block; border-radius: 8px;" />
+              </a>
             </div>
             <div style="padding: 24px 0;">
               <p style="margin: 0 0 6px; color: #111827; font-size: 16px; font-weight: 600;">
