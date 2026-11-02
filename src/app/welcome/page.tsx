@@ -24,9 +24,9 @@ export default function WelcomePage() {
     }
   }, [status, router]);
 
-  async function handleAgree() {
+  function handleAgree() {
     setLoading(true);
-    await fetch("/api/user/consent", { method: "POST" }).catch(() => {});
+    fetch("/api/user/consent", { method: "POST" }).catch(() => {});
     router.replace("/jobs");
   }
 

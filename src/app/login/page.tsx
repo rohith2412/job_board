@@ -33,6 +33,9 @@ export default function LoginPage() {
       }
     }
 
+    const dest = isSignUp ? "/welcome" : "/jobs";
+    router.prefetch(dest);
+
     const result = await signIn("credentials", {
       email,
       password,
@@ -45,7 +48,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(isSignUp ? "/welcome" : "/jobs");
+    router.push(dest);
   }
 
   return (
