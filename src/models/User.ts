@@ -10,6 +10,7 @@ export interface IUser {
   lastLoginCountry?: string;
   lastLoginRegion?: string;
   emailConsent?: boolean;
+  unsubscribeToken?: string;
   createdAt: Date;
 }
 
@@ -24,6 +25,7 @@ const UserSchema = new Schema<IUser>(
     lastLoginCountry: { type: String, default: "" },
     lastLoginRegion: { type: String, default: "" },
     emailConsent: { type: Boolean, default: false },
+    unsubscribeToken: { type: String, default: "" },
   },
   { timestamps: true }
 );

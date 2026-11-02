@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { SavedJob } from "@/models/SavedJob";
 import { Resend } from "resend";
+import crypto from "crypto";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
@@ -17,7 +18,7 @@ export async function POST() {
   await connectDB();
 
   const users = await User.find({ emailConsent: true })
-    .select("email name")
+    .select("email name unsubscribeToken")
     .lean();
 
   if (users.length === 0) {
@@ -58,11 +59,20 @@ export async function POST() {
 
   for (const user of users) {
     try {
-      const firstName = (user as { name?: string }).name?.split(" ")[0] || "";
+      const u = user as { _id: string; email: string; name?: string; unsubscribeToken?: string };
+      const firstName = u.name?.split(" ")[0] || "";
+
+      let token = u.unsubscribeToken;
+      if (!token) {
+        token = crypto.randomBytes(32).toString("hex");
+        await User.updateOne({ _id: u._id }, { unsubscribeToken: token });
+      }
+
+      const unsubscribeUrl = `${origin}/unsubscribe?token=${token}`;
 
       await resend.emails.send({
         from: fromAddress,
-        to: (user as { email: string }).email,
+        to: u.email,
         subject: `${jobs.length} new SWE jobs on Reblet`,
         html: `
           <div style="max-width: 560px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff;">
@@ -88,7 +98,7 @@ export async function POST() {
             <div style="padding: 20px 0; border-top: 1px solid #e5e7eb; text-align: center;">
               <p style="margin: 0; color: #9ca3af; font-size: 11px; line-height: 1.6;">
                 You're receiving this because you signed up on <a href="${origin}" style="color: #9ca3af;">reblet.com</a>.<br>
-                <a href="mailto:rayandteamsupport@gmail.com" style="color: #9ca3af;">Unsubscribe</a>
+                <a href="${unsubscribeUrl}" style="color: #9ca3af;">Unsubscribe</a>
               </p>
             </div>
           </div>
@@ -97,9 +107,8 @@ export async function POST() {
 
       sent++;
     } catch (err) {
-      errors.push(
-        `${(user as { email: string }).email}: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
+      const email = (user as { email: string }).email;
+      errors.push(`${email}: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   }
 
