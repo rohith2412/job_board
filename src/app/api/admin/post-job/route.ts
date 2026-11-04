@@ -124,6 +124,7 @@ ${rawText}`;
     salary: parsed.salary || "",
     snippet: parsed.snippet || "",
     link: applyLink,
+    applyUrl: applyLink,
     source: "admin",
     featured: true,
     experienceType: parsed.experienceType || "Full-time",

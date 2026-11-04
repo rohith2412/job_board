@@ -4,6 +4,66 @@ import { authOptions } from "@/lib/auth";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
+async function verifyUrl(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+    });
+    clearTimeout(timeout);
+    return res.status < 400;
+  } catch {
+    clearTimeout(timeout);
+    return false;
+  }
+}
+
+async function findCareerPageUrl(company: string, title: string, openaiKey: string): Promise<string | null> {
+  const words = company.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
+  const slugs: string[] = [];
+  slugs.push(words.join(""));
+  if (words.length > 1) slugs.push(words.slice(0, -1).join(""));
+  if (words.length > 2) slugs.push(words.slice(0, 2).join(""));
+  slugs.push(words[0]);
+
+  const urls = slugs.flatMap((s) => [
+    `https://job-boards.greenhouse.io/${s}`,
+    `https://boards.greenhouse.io/${s}`,
+    `https://jobs.lever.co/${s}`,
+    `https://jobs.ashbyhq.com/${s}`,
+    `https://jobs.smartrecruiters.com/${s}`,
+    `https://apply.workable.com/${s}`,
+  ]);
+
+  const results = await Promise.all(urls.map(async (url) => ({ url, ok: await verifyUrl(url) })));
+  const found = results.find((r) => r.ok);
+  if (found) return found.url;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 100,
+        messages: [{ role: "user", content: `What is the direct careers or job application page URL for "${company}"? Return ONLY the URL, nothing else.` }],
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const suggested = (data.choices?.[0]?.message?.content || "").trim();
+      if (suggested.startsWith("http") && !suggested.includes("linkedin.com") && await verifyUrl(suggested)) {
+        return suggested;
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
@@ -147,6 +207,16 @@ ${pageText}`;
     );
   }
 
+  let applyUrl = parsed.applyUrl || "";
+  if (!applyUrl || applyUrl.includes("linkedin.com")) {
+    const found = await findCareerPageUrl(parsed.company, parsed.title, openaiKey);
+    if (found) applyUrl = found;
+  }
+  if (!applyUrl || applyUrl.includes("linkedin.com")) {
+    const q = encodeURIComponent(`${parsed.company} ${parsed.title} apply careers -site:linkedin.com -site:indeed.com`);
+    applyUrl = `https://www.google.com/search?q=${q}`;
+  }
+
   return NextResponse.json({
     success: true,
     data: {
@@ -156,7 +226,7 @@ ${pageText}`;
       salary: parsed.salary || "",
       experienceType: parsed.experienceType || "Full-time",
       snippet: parsed.snippet || "",
-      applyUrl: parsed.applyUrl || url,
+      applyUrl,
     },
   });
 }
