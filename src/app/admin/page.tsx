@@ -167,8 +167,6 @@ export default function AdminPage() {
   const [bulkPosting, setBulkPosting] = useState(false);
   const [sendingAlerts, setSendingAlerts] = useState(false);
   const [alertResult, setAlertResult] = useState<{ sent?: number; total?: number; errors?: string[]; message?: string } | null>(null);
-  const [autoImporting, setAutoImporting] = useState(false);
-  const [autoImportResult, setAutoImportResult] = useState<{ imported?: number; skipped?: number; total?: number; errors?: string[]; jobs?: string[] } | null>(null);
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -255,27 +253,6 @@ export default function AdminPage() {
       setAlertResult({ message: "Network error" });
     }
     setSendingAlerts(false);
-  }
-
-  async function handleAutoImport() {
-    if (!confirm("Search LinkedIn for new SWE internships and auto-import them?")) return;
-    setAutoImporting(true);
-    setAutoImportResult(null);
-    try {
-      const res = await fetch("/api/admin/auto-import", { method: "POST" });
-      const data = await res.json();
-      setAutoImportResult(data);
-      if (data.imported > 0) {
-        const jobsRes = await fetch("/api/admin/jobs");
-        if (jobsRes.ok) {
-          const jobsData = await jobsRes.json();
-          setJobs(jobsData.jobs || []);
-        }
-      }
-    } catch {
-      setAutoImportResult({ imported: 0, errors: ["Network error"] });
-    }
-    setAutoImporting(false);
   }
 
   async function handleRevalidate() {
@@ -948,65 +925,6 @@ export default function AdminPage() {
         {/* Post Job Tab */}
         {tab === "post" && (
           <div className="px-6 py-6 flex flex-col gap-5">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <div className="flex items-center justify-between mb-1">
-                <h2 className="text-sm font-semibold text-gray-900">Auto-Import from LinkedIn</h2>
-              </div>
-              <p className="text-xs text-gray-500 mb-4">
-                Search LinkedIn for SWE internships posted in the last 24 hours and auto-import up to 10 new jobs.
-              </p>
-              <button
-                onClick={handleAutoImport}
-                disabled={autoImporting}
-                className={`w-full py-3.5 rounded-full text-sm font-semibold transition-all cursor-pointer border-2 border-black ${
-                  autoImporting
-                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none"
-                    : "bg-blue-300 text-black shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
-                }`}
-              >
-                {autoImporting ? "Searching LinkedIn & importing..." : "Search & Import Jobs"}
-              </button>
-
-              {autoImportResult && (
-                <div className={`mt-4 p-4 rounded-xl border ${
-                  autoImportResult.imported && autoImportResult.imported > 0
-                    ? "bg-green-50 border-green-200"
-                    : "bg-yellow-50 border-yellow-200"
-                }`}>
-                  <p className={`text-sm font-semibold ${
-                    autoImportResult.imported && autoImportResult.imported > 0 ? "text-green-800" : "text-yellow-800"
-                  }`}>
-                    {autoImportResult.imported && autoImportResult.imported > 0
-                      ? `Imported ${autoImportResult.imported} new jobs (${autoImportResult.skipped} already existed)`
-                      : autoImportResult.errors?.length
-                        ? "Import failed"
-                        : "No new jobs found"}
-                  </p>
-                  {autoImportResult.jobs && autoImportResult.jobs.length > 0 && (
-                    <div className="mt-2 flex flex-col gap-1">
-                      {autoImportResult.jobs.map((j, i) => (
-                        <p key={i} className="text-xs text-green-700">{j}</p>
-                      ))}
-                    </div>
-                  )}
-                  {autoImportResult.errors && autoImportResult.errors.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs font-medium text-red-600 mb-1">Errors:</p>
-                      {autoImportResult.errors.map((err, i) => (
-                        <p key={i} className="text-xs text-red-500 truncate">{err}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="relative flex items-center">
-              <div className="flex-1 border-t border-gray-200" />
-              <span className="px-3 text-xs text-gray-400">or add manually</span>
-              <div className="flex-1 border-t border-gray-200" />
-            </div>
-
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">Extract from URL</label>
