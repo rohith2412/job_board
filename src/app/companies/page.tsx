@@ -4,13 +4,13 @@ import { getAllFeaturedJobs } from "@/lib/data";
 import { slugifyCompany } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Companies Hiring in USA & Canada | Reblet",
+  title: "Companies Hiring SWE Interns & New Grads (2027) | Reblet",
   description:
-    "Explore top tech companies hiring software engineers in the United States and Canada. Browse open positions at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
+    "See which companies are hiring software engineering interns and new grads right now. Browse open roles with salary info and apply directly.",
   openGraph: {
-    title: "Companies Hiring Software Engineers in USA & Canada",
+    title: "Companies Hiring SWE Interns & New Grads (2027)",
     description:
-      "Explore top tech companies hiring software engineers in the USA and Canada.",
+      "See which companies are hiring SWE interns and new grads right now.",
     type: "website",
     url: "https://www.reblet.com/companies",
     siteName: "Reblet",

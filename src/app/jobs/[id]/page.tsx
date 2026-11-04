@@ -31,10 +31,10 @@ export async function generateMetadata({
   const description = cleanSnippet(job.snippet).slice(0, 160);
 
   return {
-    title: `${job.title} at ${job.company} | Reblet`,
+    title: `${job.title} at ${job.company} - Apply Now | Reblet`,
     description,
     openGraph: {
-      title: `${job.title} at ${job.company}`,
+      title: `${job.title} at ${job.company} - Apply Now`,
       description,
       type: "website",
       url: `https://www.reblet.com/jobs/${job.slug}`,

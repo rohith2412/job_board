@@ -6,13 +6,13 @@ import JobsFilter from "@/components/JobsFilter";
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "Software Engineering Jobs in USA & Canada | Reblet",
+  title: "SWE Internship & New Grad Jobs (Updated Daily) | Reblet",
   description:
-    "Browse curated software engineering jobs at top tech companies in the United States and Canada. Find roles at PolicyMe, Kepler Communications, Greenhouse, Maple, Lever and more.",
+    "Curated software engineering internships and new grad jobs in the USA & Canada. No spam, salary info included. Apply directly to top companies hiring right now.",
   openGraph: {
-    title: "Software Engineering Jobs in USA & Canada",
+    title: "SWE Internship & New Grad Jobs (Updated Daily)",
     description:
-      "Browse curated software engineering jobs at top tech companies in the USA and Canada.",
+      "Curated software engineering internships and new grad jobs. No spam, salary info included. Apply directly.",
     type: "website",
     url: "https://www.reblet.com/jobs",
     siteName: "Reblet",

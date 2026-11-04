@@ -3,8 +3,18 @@ import Link from "next/link";
 import { getAllFeaturedJobs } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "About Reblet | Curated Software Engineering Jobs",
-  description: "Reblet is a curated job board for software engineers in the USA and Canada. No spam, no duplicates - just jobs worth applying to.",
+  title: "About Reblet | SWE Jobs Board for Interns & New Grads",
+  description: "Reblet posts curated software engineering internships and new grad jobs daily. No spam, no duplicates, salary info included. Built for CS students and early-career engineers.",
+  openGraph: {
+    title: "About Reblet | SWE Jobs for Interns & New Grads",
+    description: "Curated SWE jobs posted daily. No spam, no duplicates, salary info included.",
+    type: "website",
+    url: "https://www.reblet.com/about",
+    siteName: "Reblet",
+  },
+  alternates: {
+    canonical: "https://www.reblet.com/about",
+  },
 };
 
 export default async function AboutPage() {
