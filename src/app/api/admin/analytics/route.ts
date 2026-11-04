@@ -67,6 +67,53 @@ export async function GET() {
     ...excludeSelf,
   });
 
+  const returningUsers = await Visit.aggregate([
+    {
+      $match: {
+        userEmail: { $exists: true, $ne: "" },
+        ...excludeSelf,
+      },
+    },
+    {
+      $group: {
+        _id: "$userEmail",
+        userName: { $last: "$userName" },
+        totalVisits: { $sum: 1 },
+        lastVisit: { $max: "$createdAt" },
+        firstVisit: { $min: "$createdAt" },
+        country: { $last: "$country" },
+        city: { $last: "$city" },
+        region: { $last: "$region" },
+        pages: { $addToSet: "$path" },
+      },
+    },
+    { $sort: { totalVisits: -1 } },
+    { $limit: 50 },
+    {
+      $project: {
+        _id: 1,
+        userName: 1,
+        totalVisits: 1,
+        lastVisit: 1,
+        firstVisit: 1,
+        country: 1,
+        city: 1,
+        region: 1,
+        uniquePages: { $size: "$pages" },
+      },
+    },
+  ]);
+
+  const signedInCount = await Visit.distinct("userEmail", {
+    userEmail: { $exists: true, $ne: "" },
+    ...excludeSelf,
+  });
+
+  const signedInVisits = await Visit.countDocuments({
+    userEmail: { $exists: true, $ne: "" },
+    ...excludeSelf,
+  });
+
   return NextResponse.json({
     totalVisits,
     todayVisits,
@@ -76,5 +123,10 @@ export async function GET() {
     topPages,
     topLocations,
     dailyVisits,
+    returningUsers,
+    signedInStats: {
+      uniqueUsers: signedInCount.length,
+      totalVisits: signedInVisits,
+    },
   });
 }

@@ -40,6 +40,18 @@ const REGION_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+interface ReturningUser {
+  _id: string;
+  userName: string;
+  totalVisits: number;
+  lastVisit: string;
+  firstVisit: string;
+  country: string;
+  city: string;
+  region: string;
+  uniquePages: number;
+}
+
 interface Analytics {
   totalVisits: number;
   todayVisits: number;
@@ -49,6 +61,8 @@ interface Analytics {
   topPages: { _id: string; count: number }[];
   topLocations: { _id: { country: string; city: string }; count: number }[];
   dailyVisits: { _id: string; count: number }[];
+  returningUsers: ReturningUser[];
+  signedInStats: { uniqueUsers: number; totalVisits: number };
 }
 
 interface PostedJob {
@@ -488,6 +502,23 @@ export default function AdminPage() {
               <StatCard label="All Time" value={analytics.totalVisits} sub={`${analytics.uniqueVisitors} unique`} />
             </div>
 
+            {analytics.signedInStats && (
+              <div className="flex flex-wrap gap-3">
+                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex-1 min-w-[140px]">
+                  <p className="text-2xl font-bold text-blue-900 tracking-tight">{analytics.signedInStats.uniqueUsers}</p>
+                  <p className="text-xs font-medium text-blue-600 mt-1">Signed-in Users</p>
+                  <p className="text-[10px] text-blue-400 mt-0.5">{analytics.signedInStats.totalVisits} total visits</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-purple-50 border border-purple-100 flex-1 min-w-[140px]">
+                  <p className="text-2xl font-bold text-purple-900 tracking-tight">
+                    {analytics.returningUsers ? analytics.returningUsers.filter((u) => u.totalVisits > 1).length : 0}
+                  </p>
+                  <p className="text-xs font-medium text-purple-600 mt-1">Returning Users</p>
+                  <p className="text-[10px] text-purple-400 mt-0.5">visited more than once</p>
+                </div>
+              </div>
+            )}
+
             {analytics.dailyVisits.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
@@ -553,6 +584,62 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {analytics.returningUsers && analytics.returningUsers.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+                  Signed-in Users ({analytics.returningUsers.length})
+                </h2>
+                <div className="flex flex-col gap-2">
+                  {analytics.returningUsers.map((user) => {
+                    const location = [
+                      user.city,
+                      user.region,
+                      user.country ? (COUNTRY_NAMES[user.country] || user.country) : "",
+                    ].filter(Boolean).join(", ");
+                    const isReturning = user.totalVisits > 1;
+                    return (
+                      <div key={user._id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-semibold shrink-0">
+                          {user.userName?.[0]?.toUpperCase() || user._id[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-800 truncate">
+                              {user.userName || user._id}
+                            </p>
+                            {isReturning && (
+                              <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded shrink-0">
+                                RETURNING
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate">{user._id}</p>
+                          {location && (
+                            <p className="text-[11px] text-gray-400 mt-0.5">{location}</p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-gray-900">{user.totalVisits}</p>
+                          <p className="text-[10px] text-gray-400">
+                            {user.totalVisits === 1 ? "visit" : "visits"}
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            {user.uniquePages} {user.uniquePages === 1 ? "page" : "pages"}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <p className="text-[10px] text-gray-400">Last seen</p>
+                          <p className="text-[11px] text-gray-600 font-medium">
+                            {new Date(user.lastVisit).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

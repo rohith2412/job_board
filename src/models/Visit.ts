@@ -7,6 +7,9 @@ export interface IVisit {
   region: string;
   ip: string;
   userAgent: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
   createdAt: Date;
 }
 
@@ -18,9 +21,14 @@ const VisitSchema = new Schema<IVisit>(
     region: { type: String, default: "" },
     ip: { type: String, default: "" },
     userAgent: { type: String, default: "" },
+    userId: { type: String },
+    userName: { type: String },
+    userEmail: { type: String },
   },
   { timestamps: true }
 );
+
+VisitSchema.index({ userEmail: 1, createdAt: -1 });
 
 export const Visit =
   models.Visit || mongoose.model<IVisit>("Visit", VisitSchema);
