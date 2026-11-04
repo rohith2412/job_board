@@ -15,7 +15,7 @@ export default function SharePrompt({
   const [copied, setCopied] = useState(false);
 
   const jobUrl = `https://www.reblet.com/jobs/${slug}`;
-  const shareText = `${title} at ${company} — found on reblet.com`;
+  const shareText = `${title} at ${company} - found on reblet.com`;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

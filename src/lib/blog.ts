@@ -350,6 +350,102 @@ The biggest mistake is treating interviews as a test you either pass or fail. Th
 Ready to put this into practice? Check out the latest [SWE jobs](/jobs) and [internships](/jobs/internships) on Reblet.`,
   },
   {
+    slug: "software-engineering-internship-no-experience",
+    title: "How to Get a Software Engineering Internship With No Experience",
+    description:
+      "You don't need prior work experience to land a SWE internship. Here's exactly what to do if your resume feels empty.",
+    date: "2026-11-03",
+    readTime: "7 min read",
+    content: `The biggest catch-22 in tech: you need experience to get an internship, but you need an internship to get experience. It feels impossible, but thousands of students land software engineering internships every year with zero prior work experience. Here's how they do it.
+
+## First, redefine "experience"
+
+When a job posting says "experience preferred," they don't exclusively mean paid work. They mean evidence that you can write code, solve problems, and work on something real. That evidence can come from anywhere:
+
+- A personal project you built and deployed
+- An open source contribution
+- A class project where you went beyond the assignment
+- A hackathon project
+- A freelance project for a local business or campus organization
+
+All of these count. A student who built and deployed a full-stack app used by 200 people at their university has more relevant experience than someone who spent a summer filing papers at a tech company.
+
+## Build one real project
+
+You don't need a portfolio of ten projects. You need one good one. Something you can talk about for ten minutes in an interview — what problem it solves, what technical decisions you made, what you'd do differently.
+
+The key is that it needs to be **deployed and usable**. A GitHub repo with a README is okay. A live app with a URL that an interviewer can actually click on is way better. It shows you understand the full lifecycle of software — not just writing code, but shipping it.
+
+**Good project ideas for someone with no experience:**
+
+- A tool that solves a problem at your school (course scheduler, dining hall menu aggregator, study group finder)
+- A Chrome extension that does something useful for a specific group of people
+- A Discord or Slack bot for a community you're in
+- A data dashboard that visualizes something interesting (your city's public transit data, sports stats, campus crime reports)
+
+Pick something you actually care about. Passion projects are easier to build, easier to finish, and way easier to talk about in interviews.
+
+## Target the right companies
+
+Here's where most first-time applicants go wrong: they apply exclusively to FAANG and wonder why they never hear back.
+
+Google gets over two million applications per year. Your odds there, with no experience, are extremely slim. But there are thousands of companies hiring SWE interns that get a fraction of those applications.
+
+**Where to look:**
+
+- **Defense and government contractors** (Northrop Grumman, Lockheed Martin, Booz Allen) — They hire tons of interns, the interview process is more straightforward, and the pay is solid. You might need US citizenship for some roles.
+- **Banks and financial institutions** (Capital One, JPMorgan, Fidelity) — Tech intern programs at banks are often overlooked by CS students but they're well-structured with real mentorship.
+- **Mid-size tech companies** (Datadog, Cloudflare, Ramp, Toast) — Less name recognition than FAANG but excellent engineering cultures and less competitive hiring.
+- **Local companies and startups** — Check your city's tech scene. A 50-person startup might not post on LinkedIn but they'd love a motivated intern. Email them directly.
+
+## Make your resume work with no experience
+
+Your resume doesn't need to be long. It needs to be specific.
+
+**Education section:** Put your GPA if it's above 3.0. List relevant coursework — Data Structures, Algorithms, Databases, Operating Systems. If you're in any CS-related clubs or honor societies, add them.
+
+**Projects section:** This is the star of your resume. Two or three projects with impact-focused descriptions:
+
+- Weak: "Built a web app using React and Node.js"
+- Strong: "Built a course seat tracker that monitors 2,000+ classes and sends SMS alerts when spots open — used by 300 students at UMD"
+
+The difference is specificity. Numbers, users, outcomes.
+
+**Skills section:** List languages and tools you're genuinely comfortable with. Don't list 15 technologies you used once in a tutorial. Five or six that you can actually use in an interview setting is more honest and more convincing.
+
+## Nail the behavioral interview
+
+Companies hiring interns with no experience put extra weight on behavioral signals. They want to know: Is this person motivated? Can they learn quickly? Are they coachable?
+
+Prepare stories about:
+
+- **A hard problem you solved** — Doesn't have to be at a job. A tricky bug in a class project counts.
+- **Working on a team** — Group projects, hackathons, open source. Show you can collaborate.
+- **Learning something on your own** — Taught yourself a framework? Figured out deployment? Built something outside of class requirements? That initiative matters.
+
+Use the STAR format (Situation, Task, Action, Result) to keep your answers structured and under two minutes each.
+
+## Apply early and apply broadly
+
+The conversion rate from application to interview is around 5-10% for experienced candidates. For someone with no experience, assume it's lower. That means you need volume.
+
+**Set a daily target.** Three applications per day is sustainable. Over a month, that's 90 applications. You'll likely get 5-10 responses, which is all you need.
+
+**Apply as soon as roles open.** Many companies review applications on a rolling basis. Applying in week one versus week eight for the same role can be the difference between getting an interview and getting auto-rejected.
+
+**Track everything.** Use a spreadsheet: company, role, date applied, status, follow-up date. It keeps you organized and prevents you from accidentally applying twice.
+
+## The secret nobody talks about
+
+Here it is: most companies hiring interns expect you to know very little. They're investing in your potential, not your current skill set. If you can write basic code, understand data structures, communicate clearly, and show genuine enthusiasm for learning — that's enough for most intern programs.
+
+The students who don't get internships aren't the ones who lack experience. They're the ones who either don't apply broadly enough, apply too late, or don't prepare for the interview format.
+
+Start with one project, target 50+ companies that aren't FAANG, and prepare your stories. The math works out.
+
+Browse [internship openings](/jobs/internships) and [entry-level SWE roles](/jobs/new-grad) on Reblet — we post new ones daily.`,
+  },
+  {
     slug: "how-to-use-linkedin-for-swe-jobs",
     title: "How to Actually Use LinkedIn to Get a SWE Job",
     description:

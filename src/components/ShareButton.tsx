@@ -16,7 +16,7 @@ export default function ShareButton({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const jobUrl = `https://www.reblet.com/jobs/${slug}`;
-  const shareText = `${title} at ${company} — found on reblet.com`;
+  const shareText = `${title} at ${company} - found on reblet.com`;
 
   useEffect(() => {
     if (!open) return;
