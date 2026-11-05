@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 
 const COOLDOWN_MS = 20 * 60 * 1000;
 
 export default function RatePromo() {
   const { status } = useSession();
+  const pathname = usePathname();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") return;
     if (status === "loading") return;
+    if (pathname?.startsWith("/featured")) return;
 
     try {
       const dismissed = localStorage.getItem("signup-promo-dismissed-at");
