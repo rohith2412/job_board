@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { FeaturedStudent } from "@/models/FeaturedStudent";
 
+export const dynamic = "force-dynamic";
+
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!);
 }
