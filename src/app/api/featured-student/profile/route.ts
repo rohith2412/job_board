@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { connection } from "next/server";
 import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { FeaturedStudent } from "@/models/FeaturedStudent";
 
-export const dynamic = "force-dynamic";
-
-function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
-}
-
 export async function POST(req: NextRequest) {
-  const stripe = getStripe();
+  await connection();
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const body = await req.json();
   const { sessionId, name, email, school, gradYear, headline, skills, github, linkedin, resume, portfolio, links } = body;
 
