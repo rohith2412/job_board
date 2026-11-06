@@ -3,9 +3,12 @@ import Stripe from "stripe";
 import { connectDB } from "@/lib/mongodb";
 import { FeaturedStudent } from "@/models/FeaturedStudent";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
   const body = await req.json();
   const { sessionId, name, email, school, gradYear, headline, skills, github, linkedin, resume, portfolio, links } = body;
 
