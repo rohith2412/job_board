@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
+import { getServerSession } from "next-auth";
 import { Bricolage_Grotesque } from "next/font/google";
+import { authOptions } from "@/lib/auth";
+import { findActiveFeatured, successPath } from "@/lib/featured";
 import CarouselSection from "./CarouselSection";
+
+// Paid users must get a server redirect before any of the sales page renders.
+export const instant = false;
 
 // Display face for the headline, price and stat numbers. Body text keeps your app font.
 const display = Bricolage_Grotesque({ subsets: ["latin"], display: "swap" });
@@ -56,7 +63,21 @@ function LockIcon() {
   );
 }
 
-export default function FeaturedPage() {
+export default async function FeaturedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  await connection();
+  const authSession = await getServerSession(authOptions);
+  const email = authSession?.user?.email;
+  if (email) {
+    const active = await findActiveFeatured(email);
+    if (active?.stripeSessionId) redirect(successPath(active.stripeSessionId));
+  }
+
+  const { error } = await searchParams;
+
   return (
     <main className="min-h-screen bg-white animate-[fadeIn_0.4s_ease-out]">
       <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
@@ -140,12 +161,17 @@ export default function FeaturedPage() {
             ))}
           </ul>
 
-          <Link
+          <a
             href="/api/featured-student/checkout"
             className="mt-7 block w-full py-3.5 rounded-full text-black text-base font-semibold border-2 border-black bg-green-300 shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all cursor-pointer text-center"
           >
             Continue to payment
-          </Link>
+          </a>
+          {error === "checkout" && (
+            <p role="alert" className="mt-3 text-sm text-red-600">
+              Couldn&apos;t start checkout. Please try again.
+            </p>
+          )}
         </div>
 
         <p className="mt-5 flex items-center gap-1.5 text-xs text-gray-400">

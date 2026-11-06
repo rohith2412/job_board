@@ -1,4 +1,5 @@
 import mongoose, { Schema, models } from "mongoose";
+import { HIGHLIGHT_KINDS, type Highlight } from "@/lib/highlights";
 
 export interface IFeaturedStudent {
   email: string;
@@ -6,6 +7,7 @@ export interface IFeaturedStudent {
   school: string;
   gradYear: string;
   headline: string;
+  highlights: Highlight[];
   skills: string[];
   github?: string;
   linkedin?: string;
@@ -24,9 +26,16 @@ const FeaturedStudentSchema = new Schema<IFeaturedStudent>(
   {
     email: { type: String, required: true },
     name: { type: String, required: true },
-    school: { type: String, required: true },
-    gradYear: { type: String, required: true },
-    headline: { type: String, required: true },
+    school: { type: String, default: "" },
+    gradYear: { type: String, default: "" },
+    headline: { type: String, default: "" },
+    highlights: [
+      {
+        _id: false,
+        kind: { type: String, enum: HIGHLIGHT_KINDS.map((k) => k.value), required: true },
+        text: { type: String, required: true },
+      },
+    ],
     skills: [{ type: String }],
     github: { type: String, default: "" },
     linkedin: { type: String, default: "" },
@@ -35,7 +44,7 @@ const FeaturedStudentSchema = new Schema<IFeaturedStudent>(
     links: [{ type: String }],
     image: { type: String, default: "" },
     active: { type: Boolean, default: false },
-    stripeSessionId: { type: String, default: "" },
+    stripeSessionId: { type: String, unique: true, sparse: true },
     paidAt: { type: Date },
     expiresAt: { type: Date },
   },

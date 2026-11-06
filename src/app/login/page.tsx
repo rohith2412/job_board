@@ -5,6 +5,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Only same-site paths, so the login page can't be used as an open redirect.
+function callbackUrlOr(fallback: string) {
+  const raw = new URLSearchParams(window.location.search).get("callbackUrl");
+  return raw && /^\/(?![/\\])/.test(raw) ? raw : fallback;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -33,7 +39,7 @@ export default function LoginPage() {
       }
     }
 
-    const dest = isSignUp ? "/welcome" : "/jobs";
+    const dest = callbackUrlOr(isSignUp ? "/welcome" : "/jobs");
     router.prefetch(dest);
 
     const result = await signIn("credentials", {
@@ -74,7 +80,7 @@ export default function LoginPage() {
         </p>
 
         <button
-          onClick={() => signIn("google", { callbackUrl: "/welcome" })}
+          onClick={() => signIn("google", { callbackUrl: callbackUrlOr("/welcome") })}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer mb-6"
         >
           <svg width="18" height="18" viewBox="0 0 48 48">

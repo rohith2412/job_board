@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
   region: "auto",
@@ -23,4 +23,15 @@ export async function uploadToR2(
     })
   );
   return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+}
+
+export function r2KeyFromUrl(url: string): string | null {
+  const prefix = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/`;
+  return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+}
+
+export async function deleteFromR2(key: string) {
+  await s3.send(
+    new DeleteObjectCommand({ Bucket: process.env.CLOUDFLARE_R2_BUCKET!, Key: key })
+  );
 }

@@ -3,6 +3,7 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import FeaturedProfileLink from "@/components/FeaturedProfileLink";
 
 const REGION_LABELS: Record<string, string> = {
   US: "United States",
@@ -265,6 +266,8 @@ function ProfileContent() {
             </button>
           </div>
           )}
+
+          <FeaturedProfileLink />
 
           <Link
             href="/rank"
