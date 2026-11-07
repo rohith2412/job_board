@@ -3,6 +3,23 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { LinkedInPost } from "@/models/LinkedInPost";
+import { LINKEDIN_MAX_CHARS } from "@/lib/linkedin";
+
+// Returns an error message, or null when the requested content/schedule is acceptable.
+function validate(content: unknown, status: unknown, scheduledFor: unknown) {
+  if (typeof content === "string" && content.length > LINKEDIN_MAX_CHARS) {
+    return `Post is ${content.length} characters; LinkedIn allows ${LINKEDIN_MAX_CHARS}`;
+  }
+  if (status === "scheduled") {
+    const when = new Date(String(scheduledFor ?? ""));
+    if (!scheduledFor || Number.isNaN(when.getTime())) return "Pick a date and time to schedule";
+    if (when.getTime() < Date.now() - 60_000) return "Scheduled time must be in the future";
+  }
+  if (status !== undefined && !["draft", "scheduled", "posted"].includes(String(status))) {
+    return "Invalid status";
+  }
+  return null;
+}
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
@@ -38,6 +55,8 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  const invalid = validate(content, status, scheduledFor);
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   await connectDB();
   const post = await LinkedInPost.create({
@@ -64,6 +83,8 @@ export async function PUT(req: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: "Post ID required" }, { status: 400 });
   }
+  const invalid = validate(content, status, scheduledFor);
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   await connectDB();
 
@@ -74,6 +95,7 @@ export async function PUT(req: NextRequest) {
   if (scheduledFor !== undefined)
     update.scheduledFor = scheduledFor ? new Date(scheduledFor) : null;
   if (status === "posted") update.postedAt = new Date();
+  if (status !== undefined) update.lastError = null;
 
   const post = await LinkedInPost.findByIdAndUpdate(id, update, { new: true });
   if (!post) {

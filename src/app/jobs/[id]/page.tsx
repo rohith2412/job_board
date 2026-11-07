@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getJobBySlug, getAllFeaturedJobs, getAdjacentJobs, getCompanyLogo } from "@/lib/data";
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
+import { parseJobLocation, salaryCurrency } from "@/lib/job-location";
 import PostedTime from "@/components/PostedTime";
 import ApplyButton from "@/components/ApplyButton";
 import AuthApplyButton from "@/components/AuthApplyButton";
@@ -70,8 +71,7 @@ export default async function JobDetailPage({
   ]);
   const companySlug = slugifyCompany(job.company);
 
-  const locationParts = job.location?.split(",").map((s: string) => s.trim()) || [];
-  const isRemote = job.location?.toLowerCase().includes("remote");
+  const parsedLocation = parseJobLocation(job.location);
 
   const postedDate = job.createdAt
     ? new Date(job.createdAt).toISOString().split("T")[0]
@@ -100,15 +100,10 @@ export default async function JobDetailPage({
     return "FULL_TIME";
   };
 
-  const canadianProvinces = ["ON", "BC", "QC", "AB", "MB", "SK", "NB", "NS", "PE", "NL", "YT", "NT", "NU"];
-  const isCanada =
-    job.location?.includes("Canada") ||
-    canadianProvinces.some((p) => job.location?.includes(`, ${p}`));
-
   const parseSalary = (salary: string) => {
     const nums = salary.match(/[\d,]+\.?\d*/g)?.map((n) => parseFloat(n.replace(/,/g, ""))) || [];
     let unitText = "YEAR";
-    if (/\/hr|per hour|hourly/i.test(salary)) unitText = "HOUR";
+    if (/\/\s*h(ou)?r\b|per hour|an hour|hourly/i.test(salary)) unitText = "HOUR";
     else if (/\/mo|per month|monthly/i.test(salary)) unitText = "MONTH";
     else if (/\/wk|per week|weekly/i.test(salary)) unitText = "WEEK";
     if (nums.length >= 2) {
@@ -134,28 +129,28 @@ export default async function JobDetailPage({
       name: job.company || "Unknown",
       ...(job.company && { sameAs: `https://www.reblet.com/companies/${companySlug}` }),
     },
-    jobLocation: job.location
-      ? {
-          "@type": "Place",
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: locationParts[0] || job.location,
-            addressRegion: locationParts.length > 1 ? locationParts[1] : "",
-            addressCountry: isCanada ? "CA" : "US",
-          },
-        }
-      : undefined,
-    ...(isRemote && {
+    ...(parsedLocation.places.length > 0 && {
+      jobLocation: parsedLocation.places.map((place) => ({
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: place.locality,
+          ...(place.region && { addressRegion: place.region }),
+          addressCountry: place.country,
+        },
+      })),
+    }),
+    ...(parsedLocation.remote && {
       jobLocationType: "TELECOMMUTE",
-      applicantLocationRequirements: {
+      applicantLocationRequirements: parsedLocation.remoteCountries.map((country) => ({
         "@type": "Country",
-        name: isCanada ? "CA" : "US",
-      },
+        name: country,
+      })),
     }),
     baseSalary: salaryData
       ? {
           "@type": "MonetaryAmount",
-          currency: job.salary?.includes("CAD") ? "CAD" : "USD",
+          currency: salaryCurrency(job.salary, parsedLocation),
           value: {
             "@type": "QuantitativeValue",
             ...salaryData,

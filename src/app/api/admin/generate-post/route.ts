@@ -99,7 +99,7 @@ Return ONLY the post text, nothing else.`;
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      max_tokens: 1024,
+      max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
     }),
   });

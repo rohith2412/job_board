@@ -1,0 +1,26 @@
+name: Publish scheduled LinkedIn posts
+
+on:
+  schedule:
+    # GitHub may start scheduled runs several minutes late; posts go out on the first run after their time.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: linkedin-scheduler
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish posts that are due
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body -sS --max-time 120 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "https://www.reblet.com/api/cron/linkedin-publish"

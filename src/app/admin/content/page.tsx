@@ -5,15 +5,56 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
+const MAX_CHARS = 3000;
+
+// <input type="datetime-local"> works in local time without a zone.
+function toLocalInput(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function nextHour() {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  return d;
+}
+
+const SLOT_GAP_MS = 30 * 60 * 1000;
+
+// Upcoming daily slot times in local time, skipping the past and any time already taken by a scheduled post.
+function upcomingSlots(times: string[], count: number, taken: Date[]) {
+  const sorted = [...times].filter(Boolean).sort();
+  const earliest = Date.now() + 5 * 60 * 1000;
+  const slots: Date[] = [];
+  for (let day = 0; slots.length < count && day < 30; day++) {
+    for (const t of sorted) {
+      const [h, m] = t.split(":").map(Number);
+      const d = new Date();
+      d.setDate(d.getDate() + day);
+      d.setHours(h, m, 0, 0);
+      if (d.getTime() < earliest) continue;
+      if (taken.some((x) => Math.abs(x.getTime() - d.getTime()) < SLOT_GAP_MS)) continue;
+      slots.push(d);
+      if (slots.length === count) break;
+    }
+  }
+  return slots;
+}
+
+function formatWhen(iso: string) {
+  return new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
 interface LinkedInPostItem {
   _id: string;
   content: string;
   profile: "personal1" | "personal2";
-  status: "draft" | "scheduled" | "posted";
+  status: "draft" | "scheduled" | "publishing" | "posted" | "failed";
   jobSlugs: string[];
   scheduledFor?: string;
   postedAt?: string;
+  lastError?: string;
   createdAt: string;
 }
 
@@ -34,11 +75,20 @@ export default function ContentPage() {
   const [editingPost, setEditingPost] = useState<LinkedInPostItem | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editProfile, setEditProfile] = useState<"personal1" | "personal2">("personal1");
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const [showJobPicker, setShowJobPicker] = useState(false);
   const [availableJobs, setAvailableJobs] = useState<{ slug: string; title: string; company: string; location: string }[]>([]);
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
   const [loadingJobs, setLoadingJobs] = useState(false);
+
+  const [slotTimes, setSlotTimes] = useState(["09:00", "13:00", "21:00"]);
+  const [spotlightDays, setSpotlightDays] = useState(1);
+  const [spotlights, setSpotlights] = useState<{ slug: string; title: string; content: string; when: string }[]>([]);
+  const [spotlightBusy, setSpotlightBusy] = useState<"" | "drafting" | "scheduling">("");
+  const [spotlightMsg, setSpotlightMsg] = useState("");
 
   const [aiInstruction, setAiInstruction] = useState("");
   const [refining, setRefining] = useState(false);
@@ -104,6 +154,8 @@ export default function ContentPage() {
       if (res.ok && data.content) {
         setEditContent(data.content);
         setEditProfile("personal1");
+        setScheduleAt(toLocalInput(nextHour()));
+        setSaveError("");
         setEditingPost({
           _id: "",
           content: data.content,
@@ -115,6 +167,73 @@ export default function ContentPage() {
       }
     } catch {}
     setGenerating(false);
+  }
+
+  async function draftSpotlightPosts() {
+    const taken = posts
+      .filter((p) => p.status === "scheduled" && p.scheduledFor)
+      .map((p) => new Date(p.scheduledFor as string));
+    const slots = upcomingSlots(slotTimes, slotTimes.filter(Boolean).length * spotlightDays, taken);
+    if (slots.length === 0) {
+      setSpotlightMsg("Add at least one posting time");
+      return;
+    }
+    setSpotlightBusy("drafting");
+    setSpotlightMsg("");
+    try {
+      const res = await fetch("/api/admin/linkedin-spotlight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: slots.length }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSpotlightMsg(data.error || "Could not draft posts");
+      } else {
+        setSpotlights(
+          (data.drafts as { slug: string; title: string; content: string }[]).map((d, i) => ({
+            ...d,
+            when: slots[i].toISOString(),
+          }))
+        );
+        if (data.drafts.length < slots.length) {
+          setSpotlightMsg(`Only ${data.drafts.length} jobs haven't been posted yet, so ${data.drafts.length} slots are filled.`);
+        }
+      }
+    } catch {
+      setSpotlightMsg("Network error");
+    }
+    setSpotlightBusy("");
+  }
+
+  async function scheduleSpotlights() {
+    setSpotlightBusy("scheduling");
+    setSpotlightMsg("");
+    const remaining: typeof spotlights = [];
+    const created: LinkedInPostItem[] = [];
+    let firstError = "";
+    for (const s of spotlights) {
+      try {
+        const res = await fetch("/api/admin/linkedin-posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: s.content, profile: "personal1", status: "scheduled", scheduledFor: s.when, jobSlugs: [s.slug] }),
+        });
+        const data = await res.json();
+        if (res.ok) created.push(data.post);
+        else {
+          remaining.push(s);
+          firstError ||= data.error || "Could not schedule";
+        }
+      } catch {
+        remaining.push(s);
+        firstError ||= "Network error";
+      }
+    }
+    setPosts((prev) => [...created, ...prev]);
+    setSpotlights(remaining);
+    setSpotlightMsg(firstError ? `${created.length} scheduled. ${remaining.length} failed: ${firstError}` : `${created.length} posts scheduled`);
+    setSpotlightBusy("");
   }
 
   async function handleRefine() {
@@ -135,28 +254,59 @@ export default function ContentPage() {
     setRefining(false);
   }
 
-  async function handleSave() {
-    if (!editContent.trim()) return;
+  function openEditor(post: LinkedInPostItem) {
+    setEditingPost(post);
+    setEditContent(post.content);
+    setEditProfile(post.profile);
+    setScheduleAt(toLocalInput(post.scheduledFor ? new Date(post.scheduledFor) : nextHour()));
+    setSaveError("");
+  }
+
+  async function handleSave(nextStatus: "draft" | "scheduled") {
+    if (!editContent.trim() || editContent.length > MAX_CHARS) return;
+    if (nextStatus === "scheduled" && !scheduleAt) {
+      setSaveError("Pick a date and time to schedule");
+      return;
+    }
+    setSaving(true);
+    setSaveError("");
+    const scheduledFor = nextStatus === "scheduled" ? new Date(scheduleAt).toISOString() : null;
     try {
-      if (editingPost?._id) {
-        const res = await fetch("/api/admin/linkedin-posts", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingPost._id, content: editContent, profile: editProfile }),
-        });
-        const data = await res.json();
-        if (res.ok) setPosts((prev) => prev.map((p) => p._id === editingPost._id ? data.post : p));
+      const isNew = !editingPost?._id;
+      const res = await fetch("/api/admin/linkedin-posts", {
+        method: isNew ? "POST" : "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(isNew ? { jobSlugs: editingPost?.jobSlugs || [] } : { id: editingPost?._id }),
+          content: editContent,
+          profile: editProfile,
+          status: nextStatus,
+          scheduledFor,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSaveError(data.error || "Could not save the post");
       } else {
-        const res = await fetch("/api/admin/linkedin-posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: editContent, profile: editProfile, status: "scheduled", jobSlugs: editingPost?.jobSlugs || [] }),
-        });
-        const data = await res.json();
-        if (res.ok) setPosts((prev) => [data.post, ...prev]);
+        setPosts((prev) => (isNew ? [data.post, ...prev] : prev.map((p) => (p._id === data.post._id ? data.post : p))));
+        setEditingPost(null);
+        setEditContent("");
       }
-      setEditingPost(null);
-      setEditContent("");
+    } catch {
+      setSaveError("Network error");
+    }
+    setSaving(false);
+  }
+
+  async function handleUnschedule(id: string) {
+    try {
+      const res = await fetch("/api/admin/linkedin-posts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "draft", scheduledFor: null }),
+      });
+      const data = await res.json();
+      if (res.ok) setPosts((prev) => prev.map((p) => (p._id === id ? data.post : p)));
     } catch {}
   }
 
@@ -179,6 +329,7 @@ export default function ContentPage() {
           alert(`Published to ${succeeded} account(s). Failed: ${failed.map((f: { name: string; error?: string }) => `${f.name}: ${f.error}`).join(", ")}`);
         }
         setPosts((prev) => prev.map((p) => p._id === postId ? data.post : p));
+        if (succeeded === 0) alert(`Publishing failed: ${data.post?.lastError || "unknown error"}`);
       } else {
         alert(data.error || "Failed to publish");
       }
@@ -255,7 +406,10 @@ export default function ContentPage() {
     );
   }
 
-  const scheduled = posts.filter((p) => p.status === "scheduled");
+  const scheduled = posts
+    .filter((p) => p.status === "scheduled" || p.status === "publishing")
+    .sort((a, b) => new Date(a.scheduledFor ?? 0).getTime() - new Date(b.scheduledFor ?? 0).getTime());
+  const failed = posts.filter((p) => p.status === "failed");
   const drafts = posts.filter((p) => p.status === "draft");
   const posted = posts.filter((p) => p.status === "posted");
 
@@ -280,6 +434,12 @@ export default function ContentPage() {
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <span>{scheduled.length} scheduled</span>
+              {failed.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span className="text-red-500">{failed.length} failed</span>
+                </>
+              )}
               <span>·</span>
               <span>{posted.length} posted</span>
             </div>
@@ -340,6 +500,84 @@ export default function ContentPage() {
           >
             {generating ? "Generating..." : "Generate Post from Jobs"}
           </button>
+
+          {/* Daily job spotlights */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">Daily job spotlights</h3>
+              <p className="mt-1 text-xs text-gray-400">
+                One post per job, newest unposted jobs first. Times are your local time. Review the drafts, then schedule them.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              {slotTimes.map((t, i) => (
+                <label key={i} className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-gray-500">Post {i + 1}</span>
+                  <input
+                    type="time"
+                    value={t}
+                    onChange={(e) => setSlotTimes((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400"
+                  />
+                </label>
+              ))}
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-500">Days</span>
+                <select
+                  value={spotlightDays}
+                  onChange={(e) => setSpotlightDays(Number(e.target.value))}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400"
+                >
+                  {[1, 2, 3].map((d) => (
+                    <option key={d} value={d}>
+                      {d} day{d > 1 ? "s" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                onClick={draftSpotlightPosts}
+                disabled={spotlightBusy !== ""}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {spotlightBusy === "drafting" ? "Drafting..." : "Draft posts"}
+              </button>
+            </div>
+            {spotlightMsg && <p className="text-xs text-gray-600">{spotlightMsg}</p>}
+            {spotlights.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {spotlights.map((s, i) => (
+                  <div key={s.slug} className="rounded-xl border border-gray-200 p-3 flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-amber-700">Posts {formatWhen(s.when)}</p>
+                      <button
+                        onClick={() => setSpotlights((prev) => prev.filter((_, j) => j !== i))}
+                        className="text-xs text-gray-400 hover:text-red-500 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <textarea
+                      value={s.content}
+                      onChange={(e) => setSpotlights((prev) => prev.map((x, j) => (j === i ? { ...x, content: e.target.value } : x)))}
+                      rows={10}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-gray-400 font-mono leading-relaxed"
+                    />
+                    <p className={`text-[11px] ${s.content.length > MAX_CHARS ? "text-red-600 font-semibold" : "text-gray-400"}`}>
+                      {s.content.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
+                    </p>
+                  </div>
+                ))}
+                <button
+                  onClick={scheduleSpotlights}
+                  disabled={spotlightBusy !== "" || spotlights.some((s) => s.content.length > MAX_CHARS || !s.content.trim())}
+                  className="self-start px-5 py-2 rounded-lg text-sm font-semibold bg-green-300 text-black border-2 border-black shadow-[0_3px_0_0_#000] hover:translate-y-[1px] hover:shadow-[0_2px_0_0_#000] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {spotlightBusy === "scheduling" ? "Scheduling..." : `Schedule all ${spotlights.length}`}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Job Picker */}
           {showJobPicker && (
@@ -456,18 +694,43 @@ export default function ContentPage() {
                   {refining ? "Refining..." : "Refine"}
                 </button>
               </div>
-              <div className="flex items-center justify-between">
-                <p className={`text-[10px] ${editContent.length > 3000 ? "text-red-500 font-semibold" : editContent.length > 2800 ? "text-amber-500" : "text-gray-400"}`}>
-                  {editContent.length} / 3000 characters{editContent.length > 3000 ? " - will be truncated by LinkedIn!" : ""}
-                </p>
-                <button
-                  onClick={handleSave}
-                  disabled={!editContent.trim()}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {editingPost._id ? "Update" : "Save to Queue"}
-                </button>
+              <p
+                role={editContent.length > MAX_CHARS ? "alert" : undefined}
+                className={`text-xs ${editContent.length > MAX_CHARS ? "text-red-600 font-semibold" : editContent.length > MAX_CHARS - 200 ? "text-amber-600" : "text-gray-400"}`}
+              >
+                {editContent.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
+                {editContent.length > MAX_CHARS &&
+                  ` · shorten by ${(editContent.length - MAX_CHARS).toLocaleString()} to post (LinkedIn's limit)`}
+              </p>
+              <div className="flex flex-col gap-3 rounded-xl bg-gray-50 p-3 sm:flex-row sm:items-end">
+                <label className="flex flex-1 flex-col gap-1">
+                  <span className="text-xs font-medium text-gray-500">Publish at (your local time)</span>
+                  <input
+                    type="datetime-local"
+                    value={scheduleAt}
+                    min={toLocalInput(new Date())}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                  />
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSave("draft")}
+                    disabled={saving || !editContent.trim() || editContent.length > MAX_CHARS}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Save draft
+                  </button>
+                  <button
+                    onClick={() => handleSave("scheduled")}
+                    disabled={saving || !editContent.trim() || editContent.length > MAX_CHARS || !scheduleAt}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? "Saving..." : "Schedule"}
+                  </button>
+                </div>
               </div>
+              {saveError && <p className="text-sm text-red-600">{saveError}</p>}
             </div>
           )}
 
@@ -484,7 +747,32 @@ export default function ContentPage() {
                     copied={copied}
                     publishing={publishing}
                     onCopy={handleCopy}
-                    onEdit={() => { setEditingPost(post); setEditContent(post.content); setEditProfile(post.profile); }}
+                    onEdit={() => openEditor(post)}
+                    onUnschedule={handleUnschedule}
+                    onPublish={handlePublish}
+                    onMarkPosted={handleMarkPosted}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Failed */}
+          {failed.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-3">Failed</h3>
+              <div className="flex flex-col gap-2">
+                {failed.map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    accounts={accounts}
+                    copied={copied}
+                    publishing={publishing}
+                    onCopy={handleCopy}
+                    onEdit={() => openEditor(post)}
+                    onUnschedule={handleUnschedule}
                     onPublish={handlePublish}
                     onMarkPosted={handleMarkPosted}
                     onDelete={handleDelete}
@@ -507,7 +795,8 @@ export default function ContentPage() {
                     copied={copied}
                     publishing={publishing}
                     onCopy={handleCopy}
-                    onEdit={() => { setEditingPost(post); setEditContent(post.content); setEditProfile(post.profile); }}
+                    onEdit={() => openEditor(post)}
+                    onUnschedule={handleUnschedule}
                     onPublish={handlePublish}
                     onMarkPosted={handleMarkPosted}
                     onDelete={handleDelete}
@@ -530,7 +819,8 @@ export default function ContentPage() {
                     copied={copied}
                     publishing={publishing}
                     onCopy={handleCopy}
-                    onEdit={() => { setEditingPost(post); setEditContent(post.content); setEditProfile(post.profile); }}
+                    onEdit={() => openEditor(post)}
+                    onUnschedule={handleUnschedule}
                     onPublish={handlePublish}
                     onMarkPosted={handleMarkPosted}
                     onDelete={handleDelete}
@@ -558,6 +848,7 @@ function PostCard({
   publishing,
   onCopy,
   onEdit,
+  onUnschedule,
   onPublish,
   onMarkPosted,
   onDelete,
@@ -568,6 +859,7 @@ function PostCard({
   publishing: string | null;
   onCopy: (post: LinkedInPostItem) => void;
   onEdit: () => void;
+  onUnschedule: (id: string) => void;
   onPublish: (id: string) => void;
   onMarkPosted: (id: string) => void;
   onDelete: (id: string) => void;
@@ -575,12 +867,15 @@ function PostCard({
   const statusColor =
     post.status === "posted"
       ? "text-green-600 bg-green-50"
-      : post.status === "scheduled"
+      : post.status === "scheduled" || post.status === "publishing"
         ? "text-amber-600 bg-amber-50"
-        : "text-gray-500 bg-gray-100";
+        : post.status === "failed"
+          ? "text-red-600 bg-red-50"
+          : "text-gray-500 bg-gray-100";
 
   const connectedCount = accounts.filter((a) => a.connected).length;
-  const canPublish = post.status !== "posted" && connectedCount > 0;
+  const busy = post.status === "publishing";
+  const canPublish = post.status !== "posted" && !busy && connectedCount > 0;
 
   return (
     <div className="p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 transition-colors">
@@ -602,6 +897,15 @@ function PostCard({
           })}
         </span>
       </div>
+      {post.status === "scheduled" && post.scheduledFor && (
+        <p className="mb-2 text-xs font-semibold text-amber-700">Posts {formatWhen(post.scheduledFor)}</p>
+      )}
+      {post.status === "posted" && post.postedAt && (
+        <p className="mb-2 text-xs text-green-700">Posted {formatWhen(post.postedAt)}</p>
+      )}
+      {post.status === "failed" && post.lastError && (
+        <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{post.lastError}</p>
+      )}
       <p className="text-xs text-gray-600 line-clamp-5 whitespace-pre-wrap mb-3 leading-relaxed">
         {post.content}
       </p>
@@ -635,10 +939,20 @@ function PostCard({
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
-            {publishing === post._id ? "Publishing..." : `Publish to ${connectedCount} account${connectedCount !== 1 ? "s" : ""}`}
+            {publishing === post._id
+              ? "Publishing..."
+              : `${post.status === "failed" ? "Retry now" : "Publish now"} · ${connectedCount} account${connectedCount !== 1 ? "s" : ""}`}
           </button>
         )}
-        {post.status !== "posted" && (
+        {post.status === "scheduled" && (
+          <button
+            onClick={() => onUnschedule(post._id)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            Unschedule
+          </button>
+        )}
+        {post.status !== "posted" && !busy && (
           <button
             onClick={() => onMarkPosted(post._id)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 transition-colors cursor-pointer"

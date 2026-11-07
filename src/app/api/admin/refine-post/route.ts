@@ -33,6 +33,7 @@ Rules:
 - Do NOT use any markdown formatting (no **, no [], no () links). Write plain text only.
 - Keep the same general structure unless the user asks to change it
 - Links should be plain URLs on their own line
+- Keep the TOTAL post under 2800 characters (LinkedIn allows at most 3000)
 
 Return the updated post:`;
 
@@ -44,7 +45,7 @@ Return the updated post:`;
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      max_tokens: 1024,
+      max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
     }),
   });
