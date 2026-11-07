@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { Bricolage_Grotesque } from "next/font/google";
 import { authOptions } from "@/lib/auth";
 import { findActiveFeatured, successPath } from "@/lib/featured";
-import CarouselSection from "./CarouselSection";
+import CardShowcase from "./CardShowcase";
 
 // Paid users must get a server redirect before any of the sales page renders.
 export const instant = false;
@@ -127,9 +127,9 @@ export default async function FeaturedPage({
           recruiters and hiring managers.
         </p>
 
-        {/* Carousel */}
-        <div className="mt-10 h-[200px] w-full sm:h-[480px]">
-          <CarouselSection />
+        {/* Example cards */}
+        <div className="mt-10 w-full">
+          <CardShowcase />
         </div>
 
         {/* Pricing card */}

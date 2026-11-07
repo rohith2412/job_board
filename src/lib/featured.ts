@@ -1,4 +1,7 @@
+import { cacheLife, cacheTag } from "next/cache";
 import Stripe from "stripe";
+import type { FeaturedCardProfile } from "@/components/FeaturedCard";
+import type { Highlight } from "@/lib/highlights";
 import { connectDB } from "@/lib/mongodb";
 import { FeaturedStudent } from "@/models/FeaturedStudent";
 
@@ -9,6 +12,8 @@ export const FEATURED_PRODUCT = "featured_student";
 
 const FEATURED_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
+export const FEATURED_STUDENTS_TAG = "featured-students";
+
 type Owner = { email: string; name?: string | null };
 
 export function getStripe() {
@@ -17,6 +22,39 @@ export function getStripe() {
 
 export function successPath(sessionId: string) {
   return `/featured/success?session_id=${encodeURIComponent(sessionId)}`;
+}
+
+// Completed, unexpired profiles shown publicly to recruiters.
+export async function getLiveFeaturedStudents(): Promise<(FeaturedCardProfile & { id: string })[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(FEATURED_STUDENTS_TAG);
+
+  await connectDB();
+  const docs = await FeaturedStudent.find({
+    active: true,
+    expiresAt: { $gt: new Date() },
+    headline: { $ne: "" },
+    image: { $ne: "" },
+  })
+    .sort({ paidAt: -1 })
+    .limit(24)
+    .lean();
+
+  return docs.map((d) => ({
+    id: String(d._id),
+    name: d.name,
+    image: d.image ?? "",
+    headline: d.headline,
+    school: d.school,
+    gradYear: d.gradYear,
+    highlights: (d.highlights ?? []).map((h: Highlight) => ({ kind: h.kind, text: h.text })),
+    linkedin: d.linkedin ?? "",
+    github: d.github ?? "",
+    resume: d.resume ?? "",
+    portfolio: d.portfolio ?? "",
+    links: [...(d.links ?? [])],
+  }));
 }
 
 export async function findActiveFeatured(email: string) {

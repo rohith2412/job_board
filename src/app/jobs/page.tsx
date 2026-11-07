@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getPaginatedFeaturedJobs, getFeaturedJobsCount, getJobFilterOptions, getCompanyLogos, getJobPosters, type JobFilters } from "@/lib/data";
 import { cleanSnippet } from "@/lib/utils";
 import JobsFilter from "@/components/JobsFilter";
+import FeaturedStudentsStrip from "@/components/FeaturedStudentsStrip";
 
 export const instant = false;
 
@@ -100,6 +101,7 @@ export default async function JobsPage({
   return (
     <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl flex flex-col min-h-screen">
+        {currentPage === 1 && !hasFilters && <FeaturedStudentsStrip />}
         <JobsFilter
           jobs={serialized}
           locations={filterOptions.locations}

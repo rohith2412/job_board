@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connection } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { claimPurchase } from "@/lib/featured";
+import { FEATURED_STUDENTS_TAG, claimPurchase } from "@/lib/featured";
 import {
   HIGHLIGHT_MAX_LENGTH,
   MAX_HIGHLIGHTS,
@@ -134,5 +135,6 @@ export async function POST(req: NextRequest) {
   }
 
   await FeaturedStudent.updateOne({ _id: record._id }, { $set: profile });
+  revalidateTag(FEATURED_STUDENTS_TAG, "max");
   return NextResponse.json({ ok: true });
 }

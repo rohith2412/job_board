@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import PageTracker from "@/components/PageTracker";
 import LocationTracker from "@/components/LocationTracker";
 import CookieConsent from "@/components/CookieConsent";
-import RatePromo from "@/components/RatePromo";
+import FeaturedSpotlight from "@/components/FeaturedSpotlight";
 import SessionProvider from "@/components/SessionProvider";
 import Footer from "@/components/Footer";
 const anaheim = Anaheim({
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <Navbar />
-          <RatePromo />
+          <FeaturedSpotlight />
           <Suspense fallback={null}><PageTracker /></Suspense>
           <LocationTracker />
           {children}

@@ -1,35 +1,14 @@
-import type { ReactNode } from "react";
 import { Bricolage_Grotesque } from "next/font/google";
-import { HIGHLIGHT_KINDS, type Highlight, type HighlightKind } from "@/lib/highlights";
+import { HIGHLIGHT_KINDS, type Highlight } from "@/lib/highlights";
+import {
+  GRAD_CAP_PATH,
+  HIGHLIGHT_DESIGN,
+  LINK_ICON_PATHS,
+  STAR_PATH,
+  type LinkIcon,
+} from "@/lib/card-design";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], display: "swap" });
-
-const highlightStyles: Record<HighlightKind, { bg: string; icon: ReactNode }> = {
-  experience: {
-    bg: "bg-sky-200",
-    icon: <path d="M9 3h6a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v4H2V8a2 2 0 0 1 2-2h3V5a2 2 0 0 1 2-2Zm0 3h6V5H9v1ZM2 14h20v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5Zm8 0v2h4v-2h-4Z" />,
-  },
-  award: {
-    bg: "bg-amber-200",
-    icon: <path d="M7 3h10v2h4v3a5 5 0 0 1-4.6 4.98A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1a5 5 0 0 1-3.4-2.92A5 5 0 0 1 3 8V5h4V3Zm10 4v3.83A3 3 0 0 0 19 8V7h-2ZM5 7v1a3 3 0 0 0 2 2.83V7H5Z" />,
-  },
-  project: {
-    bg: "bg-green-200",
-    icon: <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />,
-  },
-  leadership: {
-    bg: "bg-violet-200",
-    icon: <path d="M5 2h2v1h12l-2.5 5L19 13H7v9H5V2Z" />,
-  },
-  research: {
-    bg: "bg-pink-200",
-    icon: <path d="M9 2h6v2h-1v5.27l5.7 9.73A2 2 0 0 1 17.97 22H6.03a2 2 0 0 1-1.73-3L10 9.27V4H9V2Zm-.7 13h7.4l-2.33-4h-2.74L8.3 15Z" />,
-  },
-  academic: {
-    bg: "bg-orange-200",
-    icon: <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm-7 9.18v4L12 20l7-3.82v-4L12 16l-7-3.82Z" />,
-  },
-};
 
 export type FeaturedCardProfile = {
   name: string;
@@ -53,40 +32,29 @@ function hostname(url: string) {
   }
 }
 
-const icons = {
-  linkedin: (
-    <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4v11H3v-11Zm6.5 0h3.8v1.5h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1v5.45h-4v-4.83c0-1.15-.02-2.63-1.6-2.63-1.6 0-1.85 1.25-1.85 2.55v4.91h-4v-11Z" />
-  ),
-  github: (
-    <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
-  ),
-  resume: (
-    <path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V9h5.5L13 3.5ZM8 13h8v1.5H8V13Zm0 3.5h8V18H8v-1.5Z" />
-  ),
-  portfolio: (
-    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.93 6h-2.95a15.6 15.6 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8ZM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82A13.6 13.6 0 0 1 12 4.04ZM4.26 14a8.2 8.2 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26Zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.07 16Zm2.95-8H5.07a7.99 7.99 0 0 1 4.33-3.56A15.6 15.6 0 0 0 8.02 8ZM12 19.96A13.6 13.6 0 0 1 10.09 16h3.82A13.6 13.6 0 0 1 12 19.96ZM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4Zm.26 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56ZM16.36 14a16.5 16.5 0 0 0 0-4h3.38a8.2 8.2 0 0 1 0 4h-3.38Z" />
-  ),
-  link: (
-    <path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0Zm-2.12 4.95a3.5 3.5 0 0 1-4.95-4.95l2.47-2.47a1 1 0 1 1 1.41 1.41L4.94 14.8a1.5 1.5 0 0 0 2.12 2.12l2.47-2.47a1 1 0 1 1 1.41 1.41l-2.46 2.48Zm7.07-7.07a1 1 0 0 1-1.41-1.41l2.47-2.47a1.5 1.5 0 0 0-2.12-2.12l-2.47 2.47a1 1 0 1 1-1.41-1.41l2.47-2.48a3.5 3.5 0 0 1 4.95 4.95l-2.48 2.47Z" />
-  ),
-};
-
-function Icon({ name }: { name: keyof typeof icons }) {
+function Icon({ name }: { name: LinkIcon }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 shrink-0" aria-hidden="true">
-      {icons[name]}
+      <path d={LINK_ICON_PATHS[name]} />
     </svg>
   );
 }
 
-export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile }) {
+export default function FeaturedCard({
+  profile,
+  example = false,
+}: {
+  profile: FeaturedCardProfile;
+  // Sample cards on the sales page: labelled, and their link icons aren't real links.
+  example?: boolean;
+}) {
   const actions = [
     profile.linkedin && { href: profile.linkedin, label: "LinkedIn", icon: "linkedin" as const },
     profile.github && { href: profile.github, label: "GitHub", icon: "github" as const },
     profile.resume && { href: profile.resume, label: "Resume", icon: "resume" as const },
     profile.portfolio && { href: profile.portfolio, label: "Portfolio", icon: "portfolio" as const },
     ...(profile.links ?? []).map((href) => ({ href, label: hostname(href), icon: "link" as const })),
-  ].filter((a): a is { href: string; label: string; icon: keyof typeof icons } => Boolean(a));
+  ].filter((a): a is { href: string; label: string; icon: LinkIcon } => Boolean(a));
 
   const classOf = profile.gradYear ? `Class of ${profile.gradYear}` : "";
 
@@ -105,10 +73,15 @@ export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile
 
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border-2 border-black bg-green-300 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-[0_2px_0_0_#000]">
           <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3" aria-hidden="true">
-            <path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z" />
+            <path d={STAR_PATH} />
           </svg>
           Featured
         </span>
+        {example && (
+          <span className="absolute right-3 top-3.5 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            Example
+          </span>
+        )}
 
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3 text-white">
           <h2 className={`${display.className} line-clamp-2 text-[26px] font-bold leading-[1.05] tracking-tight [text-wrap:balance]`}>
@@ -116,7 +89,7 @@ export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile
           </h2>
           <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-white/85">
             <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
-              <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm-7 9.18v4L12 20l7-3.82v-4L12 16l-7-3.82Z" />
+              <path d={GRAD_CAP_PATH} />
             </svg>
             <span className="truncate">{profile.school}</span>
             {classOf && (
@@ -135,16 +108,16 @@ export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile
         {profile.highlights.length > 0 && (
           <ul className="mt-3 flex shrink-0 flex-col gap-2" aria-label="Highlights">
             {profile.highlights.map((h, i) => {
-              const style = highlightStyles[h.kind];
+              const style = HIGHLIGHT_DESIGN[h.kind];
               const label = HIGHLIGHT_KINDS.find((k) => k.value === h.kind)?.label;
               return (
                 <li key={i} className="flex items-start gap-2.5">
                   <span
                     title={label}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-[1.5px] border-black text-black ${style.bg}`}
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-[1.5px] border-black text-black ${style.bgClass}`}
                   >
                     <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
-                      {style.icon}
+                      <path d={style.path} />
                     </svg>
                   </span>
                   <p className="line-clamp-2 pt-[3px] text-[13px] font-semibold leading-snug text-gray-900">
@@ -159,7 +132,16 @@ export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile
 
         {actions.length > 0 && (
           <div className="mt-auto flex gap-1.5 pt-3">
-              {actions.slice(0, 5).map((a) => (
+              {actions.slice(0, 5).map((a) =>
+                example ? (
+                  <span
+                    key={a.href}
+                    title={a.label}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-black bg-white text-black shadow-[0_2px_0_0_#000]"
+                  >
+                    <Icon name={a.icon} />
+                  </span>
+                ) : (
                 <a
                   key={a.href}
                   href={a.href}
@@ -171,7 +153,8 @@ export default function FeaturedCard({ profile }: { profile: FeaturedCardProfile
                 >
                   <Icon name={a.icon} />
                 </a>
-              ))}
+                )
+              )}
           </div>
         )}
       </div>

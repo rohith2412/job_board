@@ -9,6 +9,133 @@ export interface BlogPost {
 
 export const posts: BlogPost[] = [
   {
+    slug: "introducing-featured-student-profiles",
+    title: "Introducing Featured Student Profiles on Reblet",
+    description:
+      "For $3, put your profile at the top of Reblet's job board for 30 days. Here's what you get, where it shows up, and how to make yours stand out.",
+    date: "2026-11-06",
+    readTime: "4 min read",
+    content: `Job boards are built for one direction: students search, companies get flooded with applications. Recruiters looking for strong students have to dig through the same noisy channels everyone else uses.
+
+Featured student profiles flip that. Instead of only applying to jobs on Reblet, you can put yourself where recruiters and hiring managers already look: the top of the job board.
+
+## What you get
+
+For **$3**, your profile is featured on Reblet for **30 days**. Your card includes:
+
+- **A professional photo** - you upload it and crop it right in the browser, so your face is centered every time.
+- **Your name, school, and graduation year** - the basics a recruiter checks first.
+- **A one-line headline** - what you're about and what you're looking for.
+- **Up to three highlights** - your best achievements, each tagged as experience, award, project, leadership, research, or academic.
+- **Your links** - LinkedIn, GitHub, resume, portfolio, and extra links, one tap away.
+
+## Where it shows up
+
+Featured profiles appear in two places:
+
+1. **The Featured students row** at the top of [the job board](/jobs), the first thing people see when they open Reblet.
+2. **The featured student spotlight** - visitors periodically see one featured profile up close, rotating through everyone who's featured so each student gets a fair turn.
+
+Anyone can click a card to see the full profile and open your links.
+
+## Why highlights, not skill lists
+
+Most profiles list the same tools: Python, Java, React, SQL. That doesn't help a recruiter tell students apart. So the featured card is built around what you've done, not what you've listed.
+
+A highlight like "Built a course planner used by 12,000 students" or "1st place out of 150 teams at a campus hackathon" says more in one line than a row of logos. We wrote a whole post on this: [Stand Out to Recruiters: Lead With Achievements, Not Skill Lists](/blog/stand-out-to-recruiters-achievements-not-skills).
+
+## How to get featured
+
+1. **Sign in** to your Reblet account.
+2. **Go to [the Featured page](/featured)** and continue to payment.
+3. **Build your profile.** Upload and crop your photo, then fill in your details and highlights. A live preview shows your card exactly as recruiters will see it, and it updates as you type.
+4. **Save, and you're live.** Your card shows up on the job board within minutes.
+
+You can edit your profile any time during your 30 days. Find it under **Your featured profile** on your [profile page](/profile).
+
+## Tips for a strong card
+
+- **Use a clear, well-lit headshot.** Face the camera, plain background, no group photos.
+- **Make every highlight specific.** Start with an action and include a number: users, rank, percent, members.
+- **Keep the headline short.** Say what you are and what you want: "CS junior building ML tools, seeking Summer 2027 internships."
+- **Add your links.** A recruiter who likes your card will click through to your GitHub or resume, so make sure they're up to date.
+
+## Ready?
+
+[Get featured on Reblet](/featured) and put your best work in front of the people hiring.`,
+  },
+  {
+    slug: "stand-out-to-recruiters-achievements-not-skills",
+    title: "Stand Out to Recruiters: Lead With Achievements, Not Skill Lists",
+    description:
+      "Every student lists Python and React. Here's how to show recruiters what you've actually done, in the few seconds they give you.",
+    date: "2026-11-06",
+    readTime: "6 min read",
+    content: `Open ten student resumes and you'll see the same line ten times: "Skills: Python, Java, React, SQL, Git, AWS." It's not wrong. It's just invisible. When every candidate lists the same tools, the list stops telling a recruiter anything.
+
+What does tell them something is what you did with those tools. That's the shift this post is about.
+
+## Why skill lists don't work
+
+Recruiters skim. A first pass on a profile takes seconds, not minutes. In that window they're asking one question: has this person done something real?
+
+A skill list can't answer that. "React" could mean you shipped a product used by thousands of people, or that you finished half a tutorial. Recruiters know this, so they mostly skip the list and look for evidence.
+
+Skills still matter. They help you show up in keyword searches and get past applicant tracking systems. But they're the filter, not the pitch. Once a human is looking, achievements do the work.
+
+## What counts as an achievement
+
+You probably have more than you think. An achievement is anything with a result attached. Six kinds show up again and again on strong student profiles:
+
+- **Experience** - an internship, a research assistant role, a part-time dev job. "SWE intern at a fintech startup, built the dashboard customers use to track payments."
+- **Awards** - hackathons, coding competitions, scholarships. "1st place out of 150 teams at a campus hackathon."
+- **Projects** - something you built that other people use. "Course planner used by 12,000 students at my university."
+- **Leadership** - running a club, organizing an event, mentoring. "President of Women in CS, grew membership from 120 to 400."
+- **Research** - lab work, papers, posters. "Co-authored a paper on efficient NLP models, accepted at a 2026 workshop."
+- **Academics** - when they're genuinely strong. "Dean's List every semester, 3.9 GPA."
+
+You don't need one of each. Two or three strong ones beat ten weak ones.
+
+## How to write one that lands
+
+The difference between a forgettable line and a memorable one is usually specifics. Compare:
+
+- "Worked on backend services" vs. "Cut API latency by 40% by adding a caching layer"
+- "Built a mobile app" vs. "Shipped an iOS app with 50,000+ downloads"
+- "Member of the AI club" vs. "Founded the campus AI club, now 250 members"
+
+The second version of each one does three things:
+
+1. **Starts with an action** - built, shipped, cut, founded, led. Not "worked on" or "helped with."
+2. **Has a number** - users, percent, rank, members, dollars saved. Numbers are the fastest thing for a skimming eye to catch.
+3. **Fits on one line** - if it needs a paragraph to explain, it's not a highlight yet. Trim it until it reads in one breath.
+
+If you don't have a number, use scale or context instead: "used by my whole department," "adopted by the club as its official tool," "selected as one of 10 finalists."
+
+## Don't have big achievements yet?
+
+That's normal, and it's fixable faster than you'd think.
+
+- **Ship something small, then get people to use it.** A tool your classmates actually use is a better story than a complex project nobody touched. Even 50 users is a real number.
+- **Enter one hackathon.** You don't need to win. "Built a working prototype in 24 hours with a team of four" is already more interesting than a skill list.
+- **Take on one thing in a club.** Organize a workshop, run the Discord, ship the club website. Leadership doesn't require a title.
+- **Measure what you already did.** Go back to old projects and find the numbers. How many users? How much faster? How many stars or forks?
+
+## Put achievements where recruiters look
+
+Once you have two or three strong lines, put them everywhere a recruiter might land:
+
+- **Top of your resume** - a short highlights section above your experience works well for students with thin work history.
+- **Your LinkedIn headline and About section** - lead with your best result, not your major.
+- **Your portfolio homepage** - the first screen should show what you built and who used it, not a list of logos.
+
+Reblet's [featured student profiles](/featured) are built around this idea. Instead of a wall of programming languages, your card leads with up to three highlights, each tagged as experience, award, project, leadership, research, or academic, right next to your photo, school, and links. Recruiters browsing [the job board](/jobs) see what you've done at a glance.
+
+## The bottom line
+
+Your skills get you into the search results. Your achievements get you the interview. Pick your best two or three, make each one specific with a number, and put them where recruiters look first.`,
+  },
+  {
     slug: "best-swe-internships-summer-2027",
     title: "Best Software Engineering Internships for Summer 2027",
     description:
