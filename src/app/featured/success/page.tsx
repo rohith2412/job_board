@@ -47,6 +47,7 @@ export default async function FeaturedSuccessPage({
     image: record.image || "",
     school: record.school || "",
     gradYear: record.gradYear || "",
+    country: record.country || "",
     headline: record.headline || "",
     highlights: (record.highlights ?? []).map((h: Highlight) => ({ kind: h.kind, text: h.text })),
     skills: [...(record.skills ?? [])],

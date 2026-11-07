@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { FEATURED_STUDENTS_TAG, claimPurchase } from "@/lib/featured";
+import { isCountryCode } from "@/lib/countries";
 import {
   HIGHLIGHT_MAX_LENGTH,
   MAX_HIGHLIGHTS,
@@ -19,6 +20,7 @@ type Profile = {
   name: string;
   school: string;
   gradYear: string;
+  country: string;
   headline: string;
   highlights: Highlight[];
   skills: string[];
@@ -76,10 +78,13 @@ function parseProfile(body: Record<string, unknown>): Profile {
   const gradYear = text(body.gradYear, "Graduation year", 4, true);
   if (!/^(19|20)\d{2}$/.test(gradYear)) throw new Error("Graduation year must be a 4-digit year");
 
+  if (!isCountryCode(body.country)) throw new Error("Choose your country");
+
   return {
     name: text(body.name, "Full name", 100, true),
     school: text(body.school, "School", 150, true),
     gradYear,
+    country: body.country,
     headline: text(body.headline, "Headline", 160, true),
     highlights: highlights(body.highlights),
     skills: list(body.skills, "Skills", MAX_SKILLS)

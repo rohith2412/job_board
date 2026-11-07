@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FeaturedCard, { type FeaturedCardProfile } from "./FeaturedCard";
 import PhotoCropper from "./PhotoCropper";
+import { COUNTRIES, countryName, flagSrc, isCountryCode } from "@/lib/countries";
 import {
   HIGHLIGHT_KINDS,
   HIGHLIGHT_MAX_LENGTH,
@@ -21,6 +22,7 @@ export type FeaturedFormInitial = {
   image: string;
   school: string;
   gradYear: string;
+  country: string;
   headline: string;
   highlights: Highlight[];
   skills: string[];
@@ -61,6 +63,7 @@ export default function FeaturedForm({
     name: initial.name,
     school: initial.school,
     gradYear: initial.gradYear,
+    country: initial.country,
     headline: initial.headline,
     skills: initial.skills.join(", "),
     github: initial.github,
@@ -192,6 +195,7 @@ export default function FeaturedForm({
     headline: form.headline.trim() || "Your headline shows here",
     school: form.school.trim() || "Your school",
     gradYear: /^\d{4}$/.test(form.gradYear) ? form.gradYear : "",
+    country: isCountryCode(form.country) ? form.country : "",
     highlights: filledHighlights.length
       ? filledHighlights
       : [{ kind: "experience", text: "Your top achievement shows here" }],
@@ -351,6 +355,41 @@ export default function FeaturedForm({
             className={inputClass}
           />
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="featured-country" className="block text-xs font-medium text-gray-700 mb-1">
+          Country *
+        </label>
+        <div className="flex items-center gap-3">
+          <select
+            id="featured-country"
+            required
+            value={form.country}
+            onChange={(e) => update("country", e.target.value)}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              Select your country
+            </option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {isCountryCode(form.country) && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={flagSrc(form.country)}
+              alt={countryName(form.country)}
+              width={33}
+              height={22}
+              className="h-[22px] w-[33px] shrink-0 rounded-[3px] object-cover ring-1 ring-black/15"
+            />
+          )}
+        </div>
+        <p className="mt-1 text-xs text-gray-400">Shown as a flag next to your name.</p>
       </div>
 
       <div>

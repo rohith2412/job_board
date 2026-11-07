@@ -10,6 +10,7 @@ export type FeaturedExample = {
   photoSource: string;
   school: string;
   gradYear: string;
+  country: string;
   headline: string;
   highlights: Highlight[];
   links: LinkIcon[];
@@ -23,6 +24,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/Ft4p5E9HjTQ",
     school: "Georgia Tech",
     gradYear: "2026",
+    country: "US",
     headline: "CS senior focused on distributed systems, open to new grad SWE roles",
     highlights: [
       { kind: "experience", text: "Backend intern, cut API latency by 40%" },
@@ -37,6 +39,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/mpDV4xaFP8c",
     school: "UIUC",
     gradYear: "2027",
+    country: "US",
     headline: "Junior building ML tools, seeking Summer 2027 SWE internships",
     highlights: [
       { kind: "research", text: "NLP lab researcher, co-authored a 2026 paper" },
@@ -51,6 +54,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/p5BoBF0XJUA",
     school: "UT Austin",
     gradYear: "2026",
+    country: "US",
     headline: "Full-stack engineer shipping products students love",
     highlights: [
       { kind: "project", text: "Built a course planner used by 12,000 students" },
@@ -65,6 +69,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/0Zx1bDv5BNY",
     school: "University of Washington",
     gradYear: "2027",
+    country: "US",
     headline: "iOS developer and design-minded engineer",
     highlights: [
       { kind: "project", text: "Shipped an iOS app with 50,000+ downloads" },
@@ -79,6 +84,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/WMD64tMfc4k",
     school: "Purdue University",
     gradYear: "2026",
+    country: "US",
     headline: "Infrastructure-minded CS senior, AWS certified",
     highlights: [
       { kind: "experience", text: "SRE intern, automated deploys for 200+ services" },
@@ -93,6 +99,7 @@ export const FEATURED_EXAMPLES: FeaturedExample[] = [
     photoSource: "https://unsplash.com/photos/1l6UeCc9P9o",
     school: "University of Maryland",
     gradYear: "2027",
+    country: "US",
     headline: "Engineer working where machine learning meets healthcare",
     highlights: [
       { kind: "research", text: "Built a model that flags sepsis risk 6h earlier" },

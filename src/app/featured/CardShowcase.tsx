@@ -14,6 +14,7 @@ const examples: (FeaturedCardProfile & { key: string })[] = FEATURED_EXAMPLES.ma
   headline: e.headline,
   school: e.school,
   gradYear: e.gradYear,
+  country: e.country,
   highlights: e.highlights,
   // Example cards render icons, not links, so these values only decide which icons show.
   linkedin: e.links.includes("linkedin") ? "linkedin" : "",

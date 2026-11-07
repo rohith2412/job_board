@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import FeaturedCard, { type FeaturedCardProfile } from "@/components/FeaturedCard";
 import { HIGHLIGHT_DESIGN, STAR_PATH } from "@/lib/card-design";
+import { countryName, flagSrc } from "@/lib/countries";
 
 type Student = FeaturedCardProfile & { id: string };
 
@@ -24,6 +25,16 @@ function CompactCard({ student, onOpen }: { student: Student; onOpen: () => void
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-[15px] font-bold leading-tight text-gray-900">{student.name}</span>
+          {student.country && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={flagSrc(student.country)}
+              alt={countryName(student.country)}
+              width={21}
+              height={14}
+              className="h-3.5 w-[21px] shrink-0 rounded-[2px] object-cover ring-1 ring-black/15"
+            />
+          )}
           <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label="Featured">
             <path d={STAR_PATH} />
           </svg>
@@ -67,7 +78,7 @@ export default function FeaturedStudentsRow({ students }: { students: Student[] 
     <>
       <ul className="-mx-6 mt-4 flex snap-x snap-mandatory scroll-px-6 gap-4 overflow-x-auto px-6 pb-3 pt-1 [scrollbar-width:thin]">
         {students.map((student) => (
-          <li key={student.id} className="w-[300px] shrink-0 snap-start pb-1 sm:w-[340px]">
+          <li key={student.id} className="w-[min(340px,calc(100vw-3rem))] shrink-0 snap-center pb-1 first:ml-auto last:mr-auto sm:w-[340px] sm:snap-start sm:first:ml-0 sm:last:mr-0">
             <CompactCard student={student} onOpen={() => open(student)} />
           </li>
         ))}
@@ -81,7 +92,7 @@ export default function FeaturedStudentsRow({ students }: { students: Student[] 
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
-        className="m-auto w-[min(360px,calc(100vw-2rem))] overflow-visible bg-transparent p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+        className="m-auto w-[min(360px,calc(100vw-2rem))] overflow-visible bg-transparent p-0 outline-none backdrop:bg-black/50 backdrop:backdrop-blur-sm"
       >
         {selected && (
           <div className="relative">

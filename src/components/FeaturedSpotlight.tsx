@@ -77,7 +77,7 @@ export default function FeaturedSpotlight() {
       ref={dialogRef}
       aria-labelledby="featured-spotlight-title"
       onClose={handleClosed}
-      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[min(380px,calc(100vw-1.5rem))] overflow-y-auto rounded-3xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.25)] backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[min(380px,calc(100vw-1.5rem))] overflow-y-auto rounded-3xl bg-white p-4 outline-none shadow-[0_20px_60px_rgba(0,0,0,0.25)] backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     >
       <div className="mb-3 flex items-center justify-between">
         <p id="featured-spotlight-title" className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">

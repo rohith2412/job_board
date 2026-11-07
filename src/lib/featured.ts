@@ -48,6 +48,7 @@ export async function getLiveFeaturedStudents(): Promise<(FeaturedCardProfile & 
     headline: d.headline,
     school: d.school,
     gradYear: d.gradYear,
+    country: d.country ?? "",
     highlights: (d.highlights ?? []).map((h: Highlight) => ({ kind: h.kind, text: h.text })),
     linkedin: d.linkedin ?? "",
     github: d.github ?? "",

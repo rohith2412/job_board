@@ -6,6 +6,7 @@ export interface IFeaturedStudent {
   name: string;
   school: string;
   gradYear: string;
+  country: string;
   headline: string;
   highlights: Highlight[];
   skills: string[];
@@ -28,6 +29,7 @@ const FeaturedStudentSchema = new Schema<IFeaturedStudent>(
     name: { type: String, required: true },
     school: { type: String, default: "" },
     gradYear: { type: String, default: "" },
+    country: { type: String, default: "" },
     headline: { type: String, default: "" },
     highlights: [
       {

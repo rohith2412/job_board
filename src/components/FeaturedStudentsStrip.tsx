@@ -10,7 +10,7 @@ export default async function FeaturedStudentsStrip() {
     <section id="featured-students" aria-labelledby="featured-students-heading" className="scroll-mt-20 px-6 pt-8">
       <div className="flex items-baseline justify-between gap-4">
         <h2 id="featured-students-heading" className="text-lg font-bold text-gray-900">
-          Featured students
+          Star students
         </h2>
         <Link href="/featured" className="shrink-0 text-sm font-semibold text-green-700 hover:text-green-800">
           Get featured now →

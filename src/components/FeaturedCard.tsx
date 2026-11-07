@@ -7,6 +7,7 @@ import {
   STAR_PATH,
   type LinkIcon,
 } from "@/lib/card-design";
+import { countryName, flagSrc } from "@/lib/countries";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], display: "swap" });
 
@@ -16,6 +17,7 @@ export type FeaturedCardProfile = {
   headline: string;
   school: string;
   gradYear: string;
+  country?: string;
   highlights: Highlight[];
   linkedin?: string;
   github?: string;
@@ -84,9 +86,22 @@ export default function FeaturedCard({
         )}
 
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3 text-white">
-          <h2 className={`${display.className} line-clamp-2 text-[26px] font-bold leading-[1.05] tracking-tight [text-wrap:balance]`}>
-            {profile.name}
-          </h2>
+          <div className="flex items-center gap-2.5">
+            <h2 className={`${display.className} line-clamp-2 min-w-0 text-[26px] font-bold leading-[1.05] tracking-tight [text-wrap:balance]`}>
+              {profile.name}
+            </h2>
+            {profile.country && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={flagSrc(profile.country)}
+                alt={countryName(profile.country)}
+                title={countryName(profile.country)}
+                width={30}
+                height={20}
+                className="h-5 w-[30px] shrink-0 rounded-[3px] object-cover ring-1 ring-white/70"
+              />
+            )}
+          </div>
           <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-white/85">
             <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
               <path d={GRAD_CAP_PATH} />
