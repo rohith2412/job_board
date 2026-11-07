@@ -8,6 +8,7 @@ export interface ILinkedInPost {
   scheduledFor?: Date;
   postedAt?: Date;
   lastError?: string;
+  publishedUrns?: string[];
   createdAt: Date;
 }
 
@@ -28,6 +29,7 @@ const LinkedInPostSchema = new Schema<ILinkedInPost>(
     scheduledFor: { type: Date },
     postedAt: { type: Date },
     lastError: { type: String },
+    publishedUrns: [{ type: String }],
   },
   { timestamps: true }
 );

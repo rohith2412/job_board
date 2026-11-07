@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Visit } from "@/models/Visit";
+import { maybePublishDuePosts } from "@/lib/linkedin";
 
 const BOT_PATTERNS = /bot|crawl|spider|slurp|facebookexternalhit|twitterbot|linkedinbot|baiduspider|yandex|duckduckbot|googlebot|bingbot|mj12bot|ahrefsbot|semrushbot|dotbot|rogerbot|screaming|headless|phantomjs|puppet|selenium|webdriver|python-requests|axios|node-fetch|go-http-client|java\/|curl|wget|scrapy|httpclient|applebot|petalbot|bytespider|gptbot|claudebot|anthropic|ccbot/i;
 
@@ -19,6 +20,8 @@ export async function POST(req: NextRequest) {
     if (isBot(userAgent)) {
       return NextResponse.json({ ok: true });
     }
+
+    after(() => maybePublishDuePosts().catch((err) => console.error("Scheduled post check failed:", err)));
 
     await connectDB();
 

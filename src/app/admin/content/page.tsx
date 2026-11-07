@@ -55,6 +55,7 @@ interface LinkedInPostItem {
   scheduledFor?: string;
   postedAt?: string;
   lastError?: string;
+  publishedUrns?: string[];
   createdAt: string;
 }
 
@@ -901,7 +902,20 @@ function PostCard({
         <p className="mb-2 text-xs font-semibold text-amber-700">Posts {formatWhen(post.scheduledFor)}</p>
       )}
       {post.status === "posted" && post.postedAt && (
-        <p className="mb-2 text-xs text-green-700">Posted {formatWhen(post.postedAt)}</p>
+        <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-green-700">
+          <span>Posted {formatWhen(post.postedAt)}</span>
+          {post.publishedUrns?.map((urn, i) => (
+            <a
+              key={urn}
+              href={`https://www.linkedin.com/feed/update/${urn}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline underline-offset-2 hover:text-green-900"
+            >
+              View on LinkedIn{post.publishedUrns && post.publishedUrns.length > 1 ? ` (${i + 1})` : ""}
+            </a>
+          ))}
+        </p>
       )}
       {post.status === "failed" && post.lastError && (
         <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{post.lastError}</p>
