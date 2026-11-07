@@ -312,9 +312,8 @@ export default function ContentPage() {
   }
 
   async function handlePublish(postId: string) {
-    const connectedCount = accounts.filter((a) => a.connected).length;
     const connectedNames = accounts.filter((a) => a.connected).map((a) => a.name).join(", ");
-    if (!confirm(`Publish to ${connectedCount} account${connectedCount !== 1 ? "s" : ""} (${connectedNames})?`)) return;
+    if (!confirm(`Publish this post to LinkedIn now (${connectedNames})?`)) return;
     setPublishing(postId);
     try {
       const res = await fetch("/api/admin/linkedin-publish", {
@@ -381,6 +380,8 @@ export default function ContentPage() {
     setCopied(post._id);
     setTimeout(() => setCopied(null), 2000);
   }
+
+  const hasSecondProfile = accounts.some((a) => a.profileKey === "personal2" && a.connected);
 
   if (status === "loading" || loading) {
     return (
@@ -452,11 +453,11 @@ export default function ContentPage() {
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">LinkedIn Accounts</h3>
             <div className="flex flex-col gap-2">
-              {(["personal1", "personal2"] as const).map((key) => {
+              {(["personal1", "personal2"] as const).filter((key) => key === "personal1" || hasSecondProfile).map((key) => {
                 const account = accounts.find((a) => a.profileKey === key);
                 return (
-                  <div key={key} className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-2">
+                  <div key={key} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
                       <div className={`w-2 h-2 rounded-full ${account?.connected ? "bg-green-500" : "bg-gray-300"}`} />
                       <span className="text-sm font-medium text-gray-700">{PROFILE_LABELS[key]}</span>
                       {account?.connected && (
@@ -487,6 +488,14 @@ export default function ContentPage() {
                 );
               })}
             </div>
+            {!hasSecondProfile && (
+              <a
+                href="/api/admin/linkedin-auth?profile=personal2"
+                className="mt-1 inline-block text-xs font-medium text-gray-400 hover:text-gray-600"
+              >
+                + Add a second profile (optional)
+              </a>
+            )}
           </div>
 
           {/* Generate */}
@@ -652,7 +661,7 @@ export default function ContentPage() {
                   Cancel
                 </button>
               </div>
-              <div>
+              {hasSecondProfile && <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Profile</label>
                 <div className="flex gap-2">
                   {(["personal1", "personal2"] as const).map((p) => (
@@ -669,7 +678,7 @@ export default function ContentPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </div>}
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
@@ -885,9 +894,11 @@ function PostCard({
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor}`}>
             {post.status}
           </span>
-          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-            {PROFILE_LABELS[post.profile]}
-          </span>
+          {accounts.some((a) => a.profileKey === "personal2" && a.connected) && (
+            <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              {PROFILE_LABELS[post.profile]}
+            </span>
+          )}
         </div>
         <span className="text-[10px] text-gray-400 whitespace-nowrap">
           {new Date(post.createdAt).toLocaleDateString("en-US", {
@@ -955,7 +966,7 @@ function PostCard({
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
             {publishing === post._id
               ? "Publishing..."
-              : `${post.status === "failed" ? "Retry now" : "Publish now"} · ${connectedCount} account${connectedCount !== 1 ? "s" : ""}`}
+              : post.status === "failed" ? "Retry now" : "Publish now"}
           </button>
         )}
         {post.status === "scheduled" && (

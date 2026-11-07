@@ -13,9 +13,13 @@ export async function GET() {
   }
 
   await connectDB();
-  const accounts = await LinkedInAccount.find({}).lean();
+  const accounts = await LinkedInAccount.find({}).sort({ updatedAt: -1 }).lean();
 
-  const safe = accounts.map((a) => ({
+  // The same LinkedIn member can be stored under several keys; list each person once, newest first.
+  const seen = new Set<string>();
+  const unique = accounts.filter((a) => !seen.has(a.linkedinId) && seen.add(a.linkedinId));
+
+  const safe = unique.map((a) => ({
     profileKey: a.profileKey,
     name: a.name,
     connected: new Date(a.expiresAt) > new Date(),
