@@ -47,6 +47,7 @@ export default function AuthApplyButton({
   return (
     <a
       href={href}
+      data-apply-btn
       target="_blank"
       rel="noopener noreferrer"
       className="mt-2 flex items-center justify-center gap-3 w-full py-3 sm:py-4 rounded-full transition-all text-black text-base sm:text-lg font-semibold border-2 border-black bg-green-300 shadow-[0_4px_0_0_#000] hover:shadow-[0_2px_0_0_#000] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"

@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
@@ -52,18 +53,6 @@ interface ReturningUser {
   uniquePages: number;
 }
 
-interface Analytics {
-  totalVisits: number;
-  todayVisits: number;
-  weekVisits: number;
-  monthVisits: number;
-  uniqueVisitors: number;
-  topPages: { _id: string; count: number }[];
-  topLocations: { _id: { country: string; city: string }; count: number }[];
-  dailyVisits: { _id: string; count: number }[];
-  returningUsers: ReturningUser[];
-  signedInStats: { uniqueUsers: number; totalVisits: number };
-}
 
 interface PostedJob {
   slug: string;
@@ -142,7 +131,6 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const [tab, setTab] = useState<Tab>("analytics");
   const [users, setUsers] = useState<User[]>([]);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [ratings, setRatings] = useState<RatingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,13 +167,11 @@ export default function AdminPage() {
 
     Promise.all([
       fetch("/api/admin/users").then((r) => r.ok ? r.json() : Promise.reject()),
-      fetch("/api/admin/analytics").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/jobs").then((r) => r.ok ? r.json() : Promise.reject()),
       fetch("/api/admin/ratings").then((r) => r.ok ? r.json() : Promise.reject()),
     ])
-      .then(([userData, analyticsData, jobsData, ratingsData]) => {
+      .then(([userData, jobsData, ratingsData]) => {
         setUsers(userData.users || []);
-        setAnalytics(analyticsData);
         setJobs(jobsData.jobs || []);
         setRatings(ratingsData.ratings || []);
         setLoading(false);
@@ -417,7 +403,7 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50/50">
-      <div className="mx-auto max-w-4xl flex flex-col min-h-screen">
+      <div className={`mx-auto ${tab === "analytics" ? "max-w-6xl" : "max-w-4xl"} flex flex-col min-h-screen`}>
         {/* Header */}
         <div className="px-6 py-5 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between">
@@ -493,157 +479,8 @@ export default function AdminPage() {
         )}
 
         {/* Analytics Tab */}
-        {tab === "analytics" && analytics && (
-          <div className="px-6 py-6 flex flex-col gap-6">
-            <div className="flex flex-wrap gap-3">
-              <StatCard label="Today" value={analytics.todayVisits} />
-              <StatCard label="This Week" value={analytics.weekVisits} />
-              <StatCard label="This Month" value={analytics.monthVisits} />
-              <StatCard label="All Time" value={analytics.totalVisits} sub={`${analytics.uniqueVisitors} unique`} />
-            </div>
+        {tab === "analytics" && <AnalyticsDashboard />}
 
-            {analytics.signedInStats && (
-              <div className="flex flex-wrap gap-3">
-                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex-1 min-w-[140px]">
-                  <p className="text-2xl font-bold text-blue-900 tracking-tight">{analytics.signedInStats.uniqueUsers}</p>
-                  <p className="text-xs font-medium text-blue-600 mt-1">Signed-in Users</p>
-                  <p className="text-[10px] text-blue-400 mt-0.5">{analytics.signedInStats.totalVisits} total visits</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-purple-50 border border-purple-100 flex-1 min-w-[140px]">
-                  <p className="text-2xl font-bold text-purple-900 tracking-tight">
-                    {analytics.returningUsers ? analytics.returningUsers.filter((u) => u.totalVisits > 1).length : 0}
-                  </p>
-                  <p className="text-xs font-medium text-purple-600 mt-1">Returning Users</p>
-                  <p className="text-[10px] text-purple-400 mt-0.5">visited more than once</p>
-                </div>
-              </div>
-            )}
-
-            {analytics.dailyVisits.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-                  Daily Visits (Last 30 Days)
-                </h2>
-                <div className="flex items-end gap-[3px] h-28">
-                  {analytics.dailyVisits.map((day) => {
-                    const max = Math.max(...analytics.dailyVisits.map((d) => d.count));
-                    const height = max > 0 ? (day.count / max) * 100 : 0;
-                    return (
-                      <div
-                        key={day._id}
-                        className="flex-1 bg-gray-900 rounded-sm min-h-[2px] group relative hover:bg-green-500 transition-colors"
-                        style={{ height: `${Math.max(height, 2)}%` }}
-                        title={`${day._id}: ${day.count} visits`}
-                      >
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                          {day._id.slice(5)}: {day.count}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Top Pages
-                </h2>
-                <div className="flex flex-col gap-1.5">
-                  {analytics.topPages.map((page) => (
-                    <div key={page._id} className="flex items-center justify-between py-1.5">
-                      <span className="text-sm text-gray-700 font-mono truncate mr-4">{page._id}</span>
-                      <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{page.count}</span>
-                    </div>
-                  ))}
-                  {analytics.topPages.length === 0 && (
-                    <p className="text-sm text-gray-400 py-4 text-center">No page views yet</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Visitor Locations
-                </h2>
-                <div className="flex flex-col gap-1.5">
-                  {analytics.topLocations.map((loc, i) => {
-                    const country = COUNTRY_NAMES[loc._id.country] || loc._id.country;
-                    const label = loc._id.city ? `${loc._id.city}, ${country}` : country || "Unknown";
-                    return (
-                      <div key={i} className="flex items-center justify-between py-1.5">
-                        <span className="text-sm text-gray-700 truncate mr-4">{label}</span>
-                        <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{loc.count}</span>
-                      </div>
-                    );
-                  })}
-                  {analytics.topLocations.length === 0 && (
-                    <p className="text-sm text-gray-400 py-4 text-center">No location data yet</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {analytics.returningUsers && analytics.returningUsers.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-                  Signed-in Users ({analytics.returningUsers.length})
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {analytics.returningUsers.map((user) => {
-                    const location = [
-                      user.city,
-                      user.region,
-                      user.country ? (COUNTRY_NAMES[user.country] || user.country) : "",
-                    ].filter(Boolean).join(", ");
-                    const isReturning = user.totalVisits > 1;
-                    return (
-                      <div key={user._id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-semibold shrink-0">
-                          {user.userName?.[0]?.toUpperCase() || user._id[0]?.toUpperCase() || "?"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-800 truncate">
-                              {user.userName || user._id}
-                            </p>
-                            {isReturning && (
-                              <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded shrink-0">
-                                RETURNING
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 truncate">{user._id}</p>
-                          {location && (
-                            <p className="text-[11px] text-gray-400 mt-0.5">{location}</p>
-                          )}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-gray-900">{user.totalVisits}</p>
-                          <p className="text-[10px] text-gray-400">
-                            {user.totalVisits === 1 ? "visit" : "visits"}
-                          </p>
-                          <p className="text-[10px] text-gray-400">
-                            {user.uniquePages} {user.uniquePages === 1 ? "page" : "pages"}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <p className="text-[10px] text-gray-400">Last seen</p>
-                          <p className="text-[11px] text-gray-600 font-medium">
-                            {new Date(user.lastVisit).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Users Tab */}
         {tab === "users" && (
           <div className="px-6 py-4">
             <div className="flex items-center justify-between mb-3">
