@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import JobReview from "@/components/admin/JobReview";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
 
@@ -86,10 +87,11 @@ const COUNTRY_NAMES: Record<string, string> = {
   NL: "Netherlands",
 };
 
-type Tab = "analytics" | "users" | "jobs" | "ratings" | "post" | "email";
+type Tab = "analytics" | "review" | "users" | "jobs" | "ratings" | "post" | "email";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "analytics", label: "Analytics", icon: "chart" },
+  { key: "review", label: "Review", icon: "inbox" },
   { key: "users", label: "Users", icon: "users" },
   { key: "jobs", label: "Jobs", icon: "briefcase" },
   { key: "ratings", label: "Ratings", icon: "star" },
@@ -110,6 +112,8 @@ function TabIcon({ icon }: { icon: string }) {
       return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
     case "plus":
       return <svg {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+    case "inbox":
+      return <svg {...props}><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" /></svg>;
     case "mail":
       return <svg {...props}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" /></svg>;
     default:
@@ -480,6 +484,8 @@ export default function AdminPage() {
 
         {/* Analytics Tab */}
         {tab === "analytics" && <AnalyticsDashboard />}
+
+        {tab === "review" && <JobReview />}
 
         {tab === "users" && (
           <div className="px-6 py-4">
