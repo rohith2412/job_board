@@ -147,7 +147,7 @@ export default function JobReview() {
   const chosen = [...selected];
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4 pb-28 sm:px-6">
+    <div className="flex flex-col gap-3 px-4 py-4 pb-24 sm:px-6">
       <div className="rounded-2xl border border-gray-100 bg-white p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -294,7 +294,7 @@ export default function JobReview() {
       )}
 
       {chosen.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 pt-3 backdrop-blur pb-[max(12px,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur sm:bottom-0 sm:pb-[max(12px,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-4xl items-center gap-2">
             <span className="flex-1 text-sm font-medium text-gray-700">{chosen.length} selected</span>
             <button

@@ -42,19 +42,6 @@ const REGION_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-interface ReturningUser {
-  _id: string;
-  userName: string;
-  totalVisits: number;
-  lastVisit: string;
-  firstVisit: string;
-  country: string;
-  city: string;
-  region: string;
-  uniquePages: number;
-}
-
-
 interface PostedJob {
   slug: string;
   title: string;
@@ -99,6 +86,9 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "email", label: "Email", icon: "mail" },
 ];
 
+const PHONE_TABS = TABS.filter((t) => ["analytics", "review", "jobs", "users"].includes(t.key));
+const MORE_TABS = TABS.filter((t) => !["analytics", "review", "jobs", "users"].includes(t.key));
+
 function TabIcon({ icon }: { icon: string }) {
   const props = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   switch (icon) {
@@ -114,6 +104,12 @@ function TabIcon({ icon }: { icon: string }) {
       return <svg {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
     case "inbox":
       return <svg {...props}><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" /></svg>;
+    case "send":
+      return <svg {...props}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>;
+    case "refresh":
+      return <svg {...props}><path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" /></svg>;
+    case "more":
+      return <svg {...props}><circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /></svg>;
     case "mail":
       return <svg {...props}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" /></svg>;
     default:
@@ -121,19 +117,10 @@ function TabIcon({ icon }: { icon: string }) {
   }
 }
 
-function StatCard({ label, value, sub }: { label: string; value: number; sub?: string }) {
-  return (
-    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex-1 min-w-[140px]">
-      <p className="text-2xl font-bold text-gray-900 tracking-tight">{value.toLocaleString()}</p>
-      <p className="text-xs font-medium text-gray-500 mt-1">{label}</p>
-      {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const [tab, setTab] = useState<Tab>("analytics");
+  const [moreOpen, setMoreOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [ratings, setRatings] = useState<RatingItem[]>([]);
@@ -406,35 +393,35 @@ export default function AdminPage() {
     : ratings;
 
   return (
-    <main className="min-h-screen bg-gray-50/50">
+    <main className="min-h-screen bg-gray-50/50 pb-[calc(72px+env(safe-area-inset-bottom))] sm:pb-0">
       <div className={`mx-auto ${tab === "analytics" ? "max-w-6xl" : "max-w-4xl"} flex flex-col min-h-screen`}>
         {/* Header */}
-        <div className="px-6 py-5 bg-white border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-xs text-gray-400 mt-0.5">reblet.com</p>
+        <div className="px-4 py-3 sm:px-6 sm:py-5 bg-white border-b border-gray-100">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">Admin</h1>
+              <p className="hidden sm:block text-xs text-gray-400 mt-0.5">reblet.com</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/admin/content"
-                className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
               >
-                Content
+                LinkedIn content
               </Link>
               <button
                 onClick={handleRevalidate}
                 disabled={revalidating}
-                className="text-xs font-medium text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                className="hidden sm:block text-xs font-medium text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                 title="Clear page cache so new data shows on the site"
               >
                 {revalidating ? "Clearing..." : "Clear Cache"}
               </button>
-              <div className="text-right">
+              <div className="hidden sm:block text-right">
                 <p className="text-xs font-medium text-gray-600">{users.length} users</p>
                 <p className="text-xs text-gray-400">{jobs.length} jobs</p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="hidden sm:flex w-8 h-8 rounded-full bg-green-100 items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
               </div>
             </div>
@@ -442,7 +429,7 @@ export default function AdminPage() {
         </div>
 
         {/* Tab navigation */}
-        <div className="bg-white border-b border-gray-100 px-6">
+        <div className="hidden sm:block sticky top-0 z-30 bg-white border-b border-gray-100 px-6">
           <div className="flex gap-1 overflow-x-auto py-2 -mx-1">
             {TABS.map((t) => (
               <button
@@ -466,7 +453,7 @@ export default function AdminPage() {
 
         {/* Search bar (for users, jobs, ratings) */}
         {(tab === "users" || tab === "jobs" || tab === "ratings") && (
-          <div className="px-6 pt-4">
+          <div className="px-4 sm:px-6 pt-4">
             <div className="relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -483,12 +470,16 @@ export default function AdminPage() {
         )}
 
         {/* Analytics Tab */}
-        {tab === "analytics" && <AnalyticsDashboard />}
+        {tab === "analytics" && (
+          <div className="px-4 py-4 sm:px-6 sm:py-6">
+            <AnalyticsDashboard />
+          </div>
+        )}
 
         {tab === "review" && <JobReview />}
 
         {tab === "users" && (
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-400">{filteredUsers.length} {filteredUsers.length === 1 ? "user" : "users"}</p>
             </div>
@@ -557,7 +548,7 @@ export default function AdminPage() {
 
         {/* Jobs Tab */}
         {tab === "jobs" && (
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-400">{filteredJobs.length} {filteredJobs.length === 1 ? "job" : "jobs"}</p>
             </div>
@@ -621,7 +612,7 @@ export default function AdminPage() {
 
         {/* Ratings Tab */}
         {tab === "ratings" && (
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-400">{filteredRatings.length} {filteredRatings.length === 1 ? "rating" : "ratings"}</p>
             </div>
@@ -982,6 +973,68 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* Phone navigation */}
+      {moreOpen && (
+        <div className="sm:hidden fixed inset-0 z-40 bg-black/30" onClick={() => setMoreOpen(false)}>
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-2 pb-[calc(80px+env(safe-area-inset-bottom))] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {MORE_TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); setSearchQuery(""); setMoreOpen(false); }}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium cursor-pointer ${tab === t.key ? "bg-gray-100 text-gray-900" : "text-gray-700"}`}
+              >
+                <TabIcon icon={t.icon} />
+                {t.label}
+                {t.key === "ratings" && <span className="ml-auto text-xs text-gray-400">{ratings.length}</span>}
+              </button>
+            ))}
+            <Link href="/admin/content" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700">
+              <TabIcon icon="send" />
+              LinkedIn content
+            </Link>
+            <button
+              onClick={() => { setMoreOpen(false); handleRevalidate(); }}
+              disabled={revalidating}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 cursor-pointer disabled:opacity-50"
+            >
+              <TabIcon icon="refresh" />
+              {revalidating ? "Clearing cache..." : "Clear site cache"}
+            </button>
+          </div>
+        </div>
+      )}
+      <nav className="sm:hidden fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-5">
+          {PHONE_TABS.map((t) => {
+            const active = tab === t.key && !moreOpen;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); setSearchQuery(""); setMoreOpen(false); window.scrollTo({ top: 0 }); }}
+                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium cursor-pointer ${active ? "text-gray-900" : "text-gray-400"}`}
+              >
+                <span className={`flex h-7 w-12 items-center justify-center rounded-full ${active ? "bg-green-200" : ""}`}>
+                  <TabIcon icon={t.icon} />
+                </span>
+                {t.label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setMoreOpen((o) => !o)}
+            className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium cursor-pointer ${moreOpen || MORE_TABS.some((t) => t.key === tab) ? "text-gray-900" : "text-gray-400"}`}
+          >
+            <span className={`flex h-7 w-12 items-center justify-center rounded-full ${moreOpen || MORE_TABS.some((t) => t.key === tab) ? "bg-green-200" : ""}`}>
+              <TabIcon icon="more" />
+            </span>
+            More
+          </button>
+        </div>
+      </nav>
     </main>
   );
 }
