@@ -1,7 +1,8 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { crawlFeeds, smartRecruitersDescription, type Ats, type FeedJob } from "@/lib/job-feeds";
 import { FEED_SOURCES } from "@/lib/job-feed-sources";
+import { COMPANY_LOGOS_TAG, ensureCompanyLogo } from "@/lib/company-logos";
 import { JobCandidate, type IJobCandidate } from "@/models/JobCandidate";
 import { SavedJob } from "@/models/SavedJob";
 
@@ -102,7 +103,7 @@ async function writeDetails(c: IJobCandidate, description: string): Promise<Deta
   const prompt = `Extract job details from this posting and return ONLY valid JSON with these fields:
 {
   "location": "city, state/province, or Remote; list at most three locations, US and Canada first",
-  "salary": "salary range if mentioned, empty string if not",
+  "salary": "the salary exactly as the posting states it, with currency and unit, e.g. \"$57–$61 per hour\" or \"$120,000–$150,000 per year\"; empty string if not mentioned",
   "experienceType": "Internship" or "Full-time" or "Co-op" or "Contract",
   "snippet": "a clean description of the role (2-3 paragraphs covering what the role does, requirements, and any perks). Plain text, no markdown, no bullet points, no headers."
 }
@@ -130,7 +131,8 @@ ${description.slice(0, 6000)}`;
     if (!parsed.snippet) return null;
     return {
       location: String(parsed.location || c.location),
-      salary: String(parsed.salary || c.salary || ""),
+      // The feed's own pay text (with currency and unit) beats the model's rewording.
+      salary: c.salary || (/\$|£|€|₹|cad|usd|hour|hr|year|yr|month|annual/i.test(String(parsed.salary)) ? String(parsed.salary) : ""),
       experienceType: ["Internship", "Full-time", "Co-op", "Contract"].includes(parsed.experienceType) ? parsed.experienceType : guessType(c.title),
       snippet: String(parsed.snippet),
     };
@@ -173,6 +175,8 @@ export async function approveCandidates(ids: string[]) {
         experienceType: details?.experienceType ?? guessType(c.title),
       });
       await JobCandidate.updateOne({ _id: c._id }, { $set: { status: "approved", jobSlug: slug } });
+      const domain = FEED_SOURCES.find((s) => s.token === c.token && s.ats === c.ats)?.domain;
+      if (domain) await ensureCompanyLogo(c.company, domain).catch(() => "");
       revalidatePath(`/jobs/${slug}`);
       approved.push({ id, slug });
     } catch (err) {
@@ -191,4 +195,35 @@ export async function rejectCandidates(ids: string[]) {
   await connectDB();
   const res = await JobCandidate.updateMany({ _id: { $in: ids }, status: "pending" }, { $set: { status: "rejected" } });
   return { rejected: res.modifiedCount };
+}
+
+// Saves logos for every feed company, and restores the feed's exact pay text on roles already approved.
+export async function backfillFeedJobs() {
+  await connectDB();
+  let logos = 0;
+  const missing: string[] = [];
+  const queue = [...FEED_SOURCES];
+  async function worker() {
+    for (let src = queue.shift(); src; src = queue.shift()) {
+      const url = await ensureCompanyLogo(src.company, src.domain, { revalidate: false }).catch(() => "");
+      if (url) logos++;
+      else missing.push(src.company);
+    }
+  }
+  await Promise.all(Array.from({ length: 6 }, worker));
+
+  const approved = (await JobCandidate.find({ status: "approved", jobSlug: { $exists: true }, salary: { $ne: "" } })
+    .select("jobSlug salary")
+    .lean()) as unknown as { jobSlug: string; salary: string }[];
+  let salaries = 0;
+  for (const c of approved) {
+    const res = await SavedJob.updateOne({ slug: c.jobSlug, salary: { $ne: c.salary } }, { $set: { salary: c.salary } });
+    if (res.modifiedCount) {
+      salaries++;
+      revalidatePath(`/jobs/${c.jobSlug}`);
+    }
+  }
+  revalidateTag(COMPANY_LOGOS_TAG, "max");
+  revalidatePath("/jobs");
+  return { logos, missing, salaries };
 }

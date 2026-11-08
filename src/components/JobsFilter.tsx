@@ -612,7 +612,7 @@ function JobsFilterInner({
                           <img
                             src={job.logo}
                             alt={job.company}
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                            className="w-10 h-10 rounded-lg object-contain bg-white p-0.5 border border-gray-200 flex-shrink-0"
                           />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">

@@ -1,7 +1,9 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { connectDB } from "./mongodb";
 import { SavedJob } from "@/models/SavedJob";
 import { Company } from "@/models/Company";
+import { CompanyLogo } from "@/models/CompanyLogo";
+import { COMPANY_LOGOS_TAG } from "@/lib/company-logos";
 import { User } from "@/models/User";
 
 export interface JobFilters {
@@ -69,23 +71,18 @@ export async function getAllFeaturedJobs() {
   return JSON.parse(JSON.stringify(jobs));
 }
 
-export async function getCompanyLogo(companyName: string): Promise<string> {
-  "use cache";
-  cacheLife("hours");
-  await connectDB();
-  const company = await Company.findOne({ name: companyName }).select("logo").lean();
-  return (company as any)?.logo || "";
-}
-
+// Employer-uploaded logos win over the logos saved for feed companies.
 export async function getCompanyLogos(): Promise<Record<string, string>> {
   "use cache";
   cacheLife("hours");
+  cacheTag(COMPANY_LOGOS_TAG);
   await connectDB();
-  const companies = await Company.find({ logo: { $ne: "" } })
-    .select("name logo")
-    .lean();
+  const [companies, feedLogos] = await Promise.all([
+    Company.find({ logo: { $ne: "" } }).select("name logo").lean(),
+    CompanyLogo.find({}).select("name logo").lean(),
+  ]);
   const map: Record<string, string> = {};
-  for (const c of companies) {
+  for (const c of [...feedLogos, ...companies]) {
     map[(c as any).name] = (c as any).logo;
   }
   return JSON.parse(JSON.stringify(map));

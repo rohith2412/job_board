@@ -91,7 +91,7 @@ export default async function JobsPage({
         source: job.source || "",
         description: job.description || "",
         applyUrl: job.applyUrl || "",
-        logo: job.source === "company" ? (logoMap[job.company] || "") : "",
+        logo: logoMap[job.company] || "",
         postedByName: poster?.name || "",
         postedByImage: poster?.image || "",
       };

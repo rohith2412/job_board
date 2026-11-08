@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
-import { approveCandidates, rejectCandidates, syncFeeds } from "@/lib/job-review";
+import { approveCandidates, backfillFeedJobs, rejectCandidates, syncFeeds } from "@/lib/job-review";
 import { JobCandidate } from "@/models/JobCandidate";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   const list = Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string").slice(0, 50) : [];
 
   if (action === "sync") return NextResponse.json(await syncFeeds());
+  if (action === "backfill") return NextResponse.json(await backfillFeedJobs());
   if (!list.length) return NextResponse.json({ error: "Pick at least one job" }, { status: 400 });
   if (action === "approve") return NextResponse.json(await approveCandidates(list));
   if (action === "reject") return NextResponse.json(await rejectCandidates(list));

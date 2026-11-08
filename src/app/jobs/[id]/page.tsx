@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getJobBySlug, getAllFeaturedJobs, getAdjacentJobs, getCompanyLogo } from "@/lib/data";
+import { getJobBySlug, getAllFeaturedJobs, getAdjacentJobs, getCompanyLogos } from "@/lib/data";
 import { cleanSnippet, formatSalary, slugifyCompany } from "@/lib/utils";
 import { parseJobLocation, salaryCurrency } from "@/lib/job-location";
 import PostedTime from "@/components/PostedTime";
@@ -67,7 +67,7 @@ export default async function JobDetailPage({
   const [snippet, adjacent, companyLogo] = await Promise.all([
     Promise.resolve(cleanSnippet(job.snippet)),
     getAdjacentJobs(id),
-    job.source === "company" ? getCompanyLogo(job.company) : Promise.resolve(""),
+    getCompanyLogos().then((logos) => logos[job.company] || ""),
   ]);
   const companySlug = slugifyCompany(job.company);
 
@@ -215,7 +215,7 @@ export default async function JobDetailPage({
                         <img
                           src={companyLogo}
                           alt={job.company}
-                          className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                          className="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-gray-200 flex-shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">
