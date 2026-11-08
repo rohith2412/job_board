@@ -9,6 +9,87 @@ export interface BlogPost {
 
 export const posts: BlogPost[] = [
   {
+    slug: "when-to-apply-summer-2027-internships-timeline",
+    title: "When to Apply for Summer 2027 Internships: A Month-by-Month Timeline",
+    description:
+      "Most students apply too late. Here's when US internships, Canadian co-op terms, quant firms and new grad roles actually open, and what to do each month.",
+    date: "2026-11-08",
+    readTime: "6 min read",
+    content: `The most common mistake in internship recruiting isn't a weak resume. It's applying after most of the seats are gone.
+
+Software internships for next summer open a lot earlier than most students expect, and the timing is different for big tech, quant firms, startups, and Canadian co-op. Here's how the year usually runs, so you can plan around it instead of reacting to it.
+
+## The short version
+
+- **Big tech and well-known startups:** applications open between July and October, the year before the internship.
+- **Quant and trading firms:** earliest of all, often June to September.
+- **Mid-size companies:** October to January.
+- **Smaller startups:** January to April, sometimes later.
+- **Canadian co-op:** roughly four months before each work term starts.
+- **New grad roles:** August to November of your final year.
+
+Most roles are reviewed on a rolling basis. A posting that's open in December may already have filled most of its spots in October.
+
+## Month by month
+
+### June to August
+
+Quant firms like Jane Street, Hudson River Trading, IMC and Jump Trading open their internship programs first. If you're interested in quantitative trading or research, this is when to apply.
+
+This is also the time to get your resume ready. Pick your two best projects, write each bullet as an achievement with a number, and ask someone who has interned before to read it.
+
+### September and October
+
+This is the busiest stretch. Large tech companies and well-funded startups open most of their summer internships, and early applicants get the first interview slots.
+
+Apply widely. Twenty to forty applications in this window is normal. Keep a simple spreadsheet with the company, role, date applied and status so you can follow up and don't apply twice.
+
+Online assessments usually arrive within a few weeks of applying. Set aside time for them; they often have a deadline of five to seven days.
+
+### November and December
+
+Interviews peak. Many students get their first offers now, often with a deadline of two to four weeks.
+
+If you haven't applied yet, it isn't too late. Plenty of roles are still open, especially at mid-size companies. Check [internships on Reblet](/jobs/internships) and apply to the ones posted most recently first.
+
+### January to March
+
+Mid-size companies and many startups are still hiring. This is also when a lot of smaller companies decide they have budget for interns.
+
+If you have an offer with a deadline but are waiting on a company you prefer, it's fine to tell that company you have a deadline and ask whether they can speed things up.
+
+### April and May
+
+Late openings come from startups, research labs, and companies that had a candidate back out. Fewer roles, but much less competition. Keep applying until you've signed something.
+
+## Canadian co-op terms
+
+Co-op runs on four-month work terms, and hiring happens about one term ahead:
+
+| Work term | Typical application window |
+| --- | --- |
+| Winter (January to April) | September to November |
+| Summer (May to August) | January to March |
+| Fall (September to December) | May to July |
+
+Your school's co-op portal handles a lot of this, but many companies also post co-op roles publicly. Applying to both is fine and often doubles your options. Students on a co-op stream can also apply to most "intern" roles, since they're usually the same job with a different name.
+
+## New grad roles
+
+Full-time new grad roles follow the same pattern a year later. Most open between August and November of your final year, and many companies give return offers to their own interns first. If you're interning the summer before you graduate, doing well there is the single best new grad strategy.
+
+You can browse current openings on the [new grad job board](/jobs/new-grad).
+
+## What to do this week
+
+1. **Update your resume.** One page, achievements with numbers, projects linked.
+2. **Make a list of 30 companies** you'd be happy to work at, mixing big names and smaller ones.
+3. **Apply to five of them this week,** starting with roles posted in the last few days.
+4. **[Set up a job alert](/alerts)** so new roles reach you the day they're posted, before the rolling review fills them up.
+
+Timing won't get you an offer by itself, but applying early makes sure your application is actually read. Start now and you'll be ahead of most of the people you're competing with.`,
+  },
+  {
     slug: "introducing-featured-student-profiles",
     title: "Introducing Featured Student Profiles on Reblet",
     description:
