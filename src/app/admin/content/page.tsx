@@ -22,20 +22,38 @@ function nextHour() {
 
 const SLOT_GAP_MS = 30 * 60 * 1000;
 
+type SlotType = "spotlight" | "roundup" | "rotating";
+type PostKind = "spotlight" | "roundup" | "popular" | "blog" | "student" | "custom";
+
+const SLOT_TYPES: { value: SlotType; label: string }[] = [
+  { value: "spotlight", label: "Job spotlight" },
+  { value: "roundup", label: "New jobs roundup" },
+  { value: "rotating", label: "Rotating extra" },
+];
+
+const KIND_LABELS: Record<PostKind, string> = {
+  spotlight: "Job spotlight",
+  roundup: "Roundup",
+  popular: "Most viewed",
+  blog: "Blog post",
+  student: "Featured student",
+  custom: "Custom",
+};
+
 // Upcoming daily slot times in local time, skipping the past and any time already taken by a scheduled post.
-function upcomingSlots(times: string[], count: number, taken: Date[]) {
-  const sorted = [...times].filter(Boolean).sort();
+function upcomingSlots(times: { time: string; type: SlotType }[], count: number, taken: Date[]) {
+  const sorted = times.filter((t) => t.time).sort((a, b) => a.time.localeCompare(b.time));
   const earliest = Date.now() + 5 * 60 * 1000;
-  const slots: Date[] = [];
+  const slots: { date: Date; type: SlotType }[] = [];
   for (let day = 0; slots.length < count && day < 30; day++) {
-    for (const t of sorted) {
+    for (const { time: t, type } of sorted) {
       const [h, m] = t.split(":").map(Number);
       const d = new Date();
       d.setDate(d.getDate() + day);
       d.setHours(h, m, 0, 0);
       if (d.getTime() < earliest) continue;
       if (taken.some((x) => Math.abs(x.getTime() - d.getTime()) < SLOT_GAP_MS)) continue;
-      slots.push(d);
+      slots.push({ date: d, type });
       if (slots.length === count) break;
     }
   }
@@ -52,6 +70,7 @@ interface LinkedInPostItem {
   profile: "personal1" | "personal2";
   status: "draft" | "scheduled" | "publishing" | "posted" | "failed";
   jobSlugs: string[];
+  kind?: PostKind;
   scheduledFor?: string;
   postedAt?: string;
   lastError?: string;
@@ -84,9 +103,15 @@ export default function ContentPage() {
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
   const [loadingJobs, setLoadingJobs] = useState(false);
 
-  const [slotTimes, setSlotTimes] = useState(["08:00", "11:00", "14:00", "17:00", "20:00"]);
+  const [slotTimes, setSlotTimes] = useState<{ time: string; type: SlotType }[]>([
+    { time: "08:00", type: "spotlight" },
+    { time: "11:00", type: "spotlight" },
+    { time: "14:00", type: "roundup" },
+    { time: "17:00", type: "spotlight" },
+    { time: "20:00", type: "rotating" },
+  ]);
   const [spotlightDays, setSpotlightDays] = useState(1);
-  const [spotlights, setSpotlights] = useState<{ slug: string; title: string; content: string; when: string }[]>([]);
+  const [spotlights, setSpotlights] = useState<{ when: string; kind: PostKind; ref?: string; jobSlugs: string[]; title: string; content: string }[]>([]);
   const [spotlightBusy, setSpotlightBusy] = useState<"" | "drafting" | "scheduling">("");
   const [spotlightMsg, setSpotlightMsg] = useState("");
 
@@ -203,7 +228,7 @@ export default function ContentPage() {
     const taken = posts
       .filter((p) => p.status === "scheduled" && p.scheduledFor)
       .map((p) => new Date(p.scheduledFor as string));
-    const slots = upcomingSlots(slotTimes, slotTimes.filter(Boolean).length * spotlightDays, taken);
+    const slots = upcomingSlots(slotTimes, slotTimes.filter((t) => t.time).length * spotlightDays, taken);
     if (slots.length === 0) {
       setSpotlightMsg("Add at least one posting time");
       return;
@@ -214,20 +239,15 @@ export default function ContentPage() {
       const res = await fetch("/api/admin/linkedin-spotlight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: slots.length }),
+        body: JSON.stringify({ slots: slots.map((s) => ({ when: s.date.toISOString(), type: s.type })) }),
       });
       const data = await res.json();
       if (!res.ok) {
         setSpotlightMsg(data.error || "Could not draft posts");
       } else {
-        setSpotlights(
-          (data.drafts as { slug: string; title: string; content: string }[]).map((d, i) => ({
-            ...d,
-            when: slots[i].toISOString(),
-          }))
-        );
+        setSpotlights(data.drafts);
         if (data.drafts.length < slots.length) {
-          setSpotlightMsg(`Only ${data.drafts.length} jobs haven't been posted yet, so ${data.drafts.length} slots are filled.`);
+          setSpotlightMsg(`Only ${data.drafts.length} of ${slots.length} slots could be filled. Add more jobs to fill the rest.`);
         }
       }
     } catch {
@@ -247,7 +267,7 @@ export default function ContentPage() {
         const res = await fetch("/api/admin/linkedin-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: s.content, profile: "personal1", status: "scheduled", scheduledFor: s.when, jobSlugs: [s.slug] }),
+          body: JSON.stringify({ content: s.content, profile: "personal1", status: "scheduled", scheduledFor: s.when, jobSlugs: s.jobSlugs, kind: s.kind, ref: s.ref }),
         });
         const data = await res.json();
         if (res.ok) created.push(data.post);
@@ -516,7 +536,7 @@ export default function ContentPage() {
                   <span className="text-xs font-bold uppercase tracking-wider text-green-950/70">Next post</span>
                   <div>
                     <p className="text-2xl font-bold tracking-tight text-black">Nothing scheduled</p>
-                    <p className="mt-1 text-sm text-green-950/80">Draft spotlights below to fill the queue.</p>
+                    <p className="mt-1 text-sm text-green-950/80">Draft a daily plan to fill the queue.</p>
                   </div>
                 </>
               )}
@@ -531,8 +551,8 @@ export default function ContentPage() {
           {lowQueue && (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
               {scheduled.length === 0
-                ? "The queue is empty, so nothing will post. Draft a few days of spotlights below."
-                : `The queue runs out ${relative(coverageMs)}. Draft more spotlights to keep posting daily.`}
+                ? "The queue is empty, so nothing will post. Draft a few days of posts with the daily plan."
+                : `The queue runs out ${relative(coverageMs)}. Draft more posts to keep posting daily.`}
             </p>
           )}
 
@@ -588,7 +608,7 @@ export default function ContentPage() {
                       </ol>
                     </div>
                   ))}
-                  {scheduled.length === 0 && failed.length === 0 && <Empty text="Nothing in the queue. Draft spotlights to schedule the next few days." />}
+                  {scheduled.length === 0 && failed.length === 0 && <Empty text="Nothing in the queue. Draft a daily plan to schedule the next few days." />}
                 </div>
               )}
 
@@ -616,7 +636,7 @@ export default function ContentPage() {
               <div className="rounded-2xl border border-gray-200 bg-white">
                 <div className="flex border-b border-gray-100 p-1.5">
                   {([
-                    ["spotlights", "Daily spotlights"],
+                    ["spotlights", "Daily plan"],
                     ["roundup", "Roundup post"],
                   ] as const).map(([key, label]) => (
                     <button
@@ -637,21 +657,34 @@ export default function ContentPage() {
                 {createTab === "spotlights" ? (
                   <div className="flex flex-col gap-4 p-4">
                     <p className="text-xs leading-relaxed text-gray-500">
-                      One post per job, newest unposted jobs first. Each post fills the next open time slot. Times are your local time.
+                      Pick a time and post type for each slot. Spotlights share one new job each, the roundup lists the week&apos;s new jobs, and
+                      the rotating extra cycles through most viewed jobs, featured students and blog posts. Times are your local time.
                     </p>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium text-gray-500">Posting times</span>
+                      <span className="text-[11px] font-medium text-gray-500">Each day</span>
                       <div className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
-                        {slotTimes.map((t, i) => (
-                          <label key={i} className="flex items-center justify-between gap-3 px-3 py-1.5">
-                            <span className="text-sm text-gray-600">Post {i + 1}</span>
+                        {slotTimes.map((slot, i) => (
+                          <div key={i} className="flex items-center justify-between gap-2 px-2 py-1.5">
                             <input
                               type="time"
-                              value={t}
-                              onChange={(e) => setSlotTimes((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
-                              className="rounded-lg px-2 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                              value={slot.time}
+                              aria-label={`Post ${i + 1} time`}
+                              onChange={(e) => setSlotTimes((prev) => prev.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
+                              className="rounded-lg px-1.5 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                             />
-                          </label>
+                            <select
+                              value={slot.type}
+                              aria-label={`Post ${i + 1} type`}
+                              onChange={(e) => setSlotTimes((prev) => prev.map((x, j) => (j === i ? { ...x, type: e.target.value as SlotType } : x)))}
+                              className="min-w-0 rounded-lg bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 focus:outline-none"
+                            >
+                              {SLOT_TYPES.map((t) => (
+                                <option key={t.value} value={t.value}>
+                                  {t.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -678,7 +711,7 @@ export default function ContentPage() {
                     >
                       {spotlightBusy === "drafting"
                         ? "Writing drafts..."
-                        : `Draft ${slotTimes.filter(Boolean).length * spotlightDays} posts`}
+                        : `Draft ${slotTimes.filter((t) => t.time).length * spotlightDays} posts`}
                     </button>
                     {spotlightMsg && <p className="text-xs text-gray-600">{spotlightMsg}</p>}
                   </div>
@@ -746,9 +779,12 @@ export default function ContentPage() {
                   </div>
                   <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
                     {spotlights.map((s, i) => (
-                      <div key={s.slug} className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                      <div key={`${s.when}-${s.kind}`} className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-gray-800">{formatWhen(s.when)}</span>
+                          <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-gray-800">
+                            <span className="whitespace-nowrap">{formatWhen(s.when)}</span>
+                            <KindTag kind={s.kind} />
+                          </span>
                           <button
                             onClick={() => setSpotlights((prev) => prev.filter((_, j) => j !== i))}
                             className="text-xs text-gray-400 hover:text-red-500 cursor-pointer"
@@ -1126,6 +1162,7 @@ function PostCard({
           <p className="truncate text-sm font-semibold text-gray-900">{title}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
             {!compact && <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${badge}`}>{busy ? "publishing" : post.status}</span>}
+            {post.kind && post.kind !== "custom" && <KindTag kind={post.kind} />}
             {showProfile && <span>{PROFILE_LABELS[post.profile]}</span>}
             {post.status === "scheduled" && post.scheduledFor && !compact && <span>Posts {formatWhen(post.scheduledFor)}</span>}
             {busy && compact && <span className="font-semibold text-amber-700">Publishing…</span>}
@@ -1212,4 +1249,17 @@ function MenuItem({ children, onClick, danger = false }: { children: React.React
       {children}
     </button>
   );
+}
+
+const KIND_COLORS: Record<PostKind, string> = {
+  spotlight: "bg-green-50 text-green-800",
+  roundup: "bg-sky-50 text-sky-800",
+  popular: "bg-orange-50 text-orange-800",
+  blog: "bg-violet-50 text-violet-800",
+  student: "bg-pink-50 text-pink-800",
+  custom: "bg-gray-100 text-gray-700",
+};
+
+function KindTag({ kind }: { kind: PostKind }) {
+  return <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_COLORS[kind]}`}>{KIND_LABELS[kind]}</span>;
 }

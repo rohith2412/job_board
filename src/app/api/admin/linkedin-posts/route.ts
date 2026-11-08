@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
-import { LinkedInPost } from "@/models/LinkedInPost";
+import { LinkedInPost, POST_KINDS } from "@/models/LinkedInPost";
 import { LINKEDIN_MAX_CHARS } from "@/lib/linkedin";
 
 // Returns an error message, or null when the requested content/schedule is acceptable.
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { content, profile, status, jobSlugs, scheduledFor } =
+  const { content, profile, status, jobSlugs, scheduledFor, kind, ref } =
     await req.json();
 
   if (!content || !profile) {
@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
     profile,
     status: status || "draft",
     jobSlugs: jobSlugs || [],
+    ...(POST_KINDS.includes(kind) ? { kind } : {}),
+    ...(typeof ref === "string" && ref ? { ref: ref.slice(0, 200) } : {}),
     scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
   });
 

@@ -1,10 +1,16 @@
 import mongoose, { Schema, models } from "mongoose";
 
+export const POST_KINDS = ["spotlight", "roundup", "popular", "blog", "student", "custom"] as const;
+export type PostKind = (typeof POST_KINDS)[number];
+
 export interface ILinkedInPost {
   content: string;
   profile: "personal1" | "personal2";
   status: "draft" | "scheduled" | "publishing" | "posted" | "failed";
   jobSlugs: string[];
+  // What the post is about; ref names the blog slug or featured student it shares.
+  kind?: PostKind;
+  ref?: string;
   scheduledFor?: Date;
   postedAt?: Date;
   lastError?: string;
@@ -26,6 +32,8 @@ const LinkedInPostSchema = new Schema<ILinkedInPost>(
       default: "draft",
     },
     jobSlugs: [{ type: String }],
+    kind: { type: String, enum: POST_KINDS },
+    ref: { type: String },
     scheduledFor: { type: Date },
     postedAt: { type: Date },
     lastError: { type: String },
