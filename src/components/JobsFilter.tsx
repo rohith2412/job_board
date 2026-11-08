@@ -531,8 +531,21 @@ function JobsFilterInner({
                   className={`group block p-4 sm:p-5 h-full transition-all ${session ? "cursor-pointer hover:border-gray-200 hover:shadow-md hover:shadow-gray-100/50" : "blur-[2px] opacity-60 select-none pointer-events-none"}`}
                 >
                   <div className="flex flex-col gap-3 h-full">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm text-gray-500 font-medium truncate">{job.company}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
+                        {job.logo ? (
+                          <img
+                            src={job.logo}
+                            alt=""
+                            className="w-7 h-7 rounded-md object-contain bg-white p-0.5 border border-gray-200 flex-shrink-0"
+                          />
+                        ) : (
+                          <span className="w-7 h-7 rounded-md bg-green-200 flex items-center justify-center text-green-700 font-bold text-xs flex-shrink-0" aria-hidden="true">
+                            {job.company.charAt(0)}
+                          </span>
+                        )}
+                        <span className="text-sm text-gray-500 font-medium truncate">{job.company}</span>
+                      </span>
                       {job.source === "company" && (
                         <span className="text-[10px] font-semibold text-green-700 bg-green-200/60 px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider">
                           Hiring
