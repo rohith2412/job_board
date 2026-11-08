@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { crawlFeeds, smartRecruitersDescription, type Ats, type FeedJob } from "@/lib/job-feeds";
@@ -13,7 +14,47 @@ const SOURCE_LABELS: Record<Ats, string> = {
   smartrecruiters: "SmartRecruiters",
 };
 
-// Reads every company feed and queues new matching roles for review. Roles already on Reblet are skipped.
+const AUTO_ADD_DAYS = 7;
+const AUTO_ADD_PER_RUN = 40;
+const AUTO_ADD_ID = "job-auto-add";
+
+function settings() {
+  return mongoose.connection.collection<{ _id: string; enabled: boolean; updatedAt: Date }>("settings");
+}
+
+// Auto-add is on unless the admin turned it off.
+export async function getAutoAdd() {
+  await connectDB();
+  const doc = await settings().findOne({ _id: AUTO_ADD_ID });
+  return { enabled: doc ? doc.enabled : true, days: AUTO_ADD_DAYS };
+}
+
+export async function setAutoAdd(enabled: boolean) {
+  await connectDB();
+  await settings().updateOne({ _id: AUTO_ADD_ID }, { $set: { enabled, updatedAt: new Date() } }, { upsert: true });
+  return getAutoAdd();
+}
+
+// Approves queued roles the company published within the last week, newest first.
+export async function autoAddRecent() {
+  const { enabled } = await getAutoAdd();
+  if (!enabled) return { added: 0, skipped: 0 };
+  const ids = (await JobCandidate.find({
+    status: "pending",
+    closed: false,
+    postedAt: { $gte: new Date(Date.now() - AUTO_ADD_DAYS * 86_400_000) },
+  })
+    .sort({ postedAt: -1 })
+    .limit(AUTO_ADD_PER_RUN)
+    .select("_id")
+    .lean()) as unknown as { _id: unknown }[];
+  if (!ids.length) return { added: 0, skipped: 0 };
+  const result = await approveCandidates(ids.map((c) => String(c._id)));
+  return { added: result.approved.length, skipped: result.failed.length };
+}
+
+// Reads every company feed and queues new matching roles for review. Roles already on Reblet are skipped,
+// and roles published within the last week are added automatically when auto-add is on.
 export async function syncFeeds() {
   await connectDB();
   const crawl = await crawlFeeds(FEED_SOURCES);
@@ -43,11 +84,12 @@ export async function syncFeeds() {
                 applyUrl: m.applyUrl,
                 description: m.description.slice(0, 8000),
                 salary: m.salary,
-                ...(m.postedAt ? { postedAt: new Date(m.postedAt) } : {}),
                 status: "pending",
                 firstSeenAt: now,
               },
-              $set: { lastSeenAt: now, closed: false },
+              // Publish dates are refreshed every run so a corrected feed date replaces an old one.
+              $set: { lastSeenAt: now, closed: false, ...(m.postedAt ? { postedAt: new Date(m.postedAt) } : {}) },
+              ...(m.postedAt ? {} : { $unset: { postedAt: "" } }),
             },
             upsert: true,
           },
@@ -63,11 +105,14 @@ export async function syncFeeds() {
     { $set: { closed: true } }
   );
 
+  const auto = await autoAddRecent();
+
   return {
     companies: FEED_SOURCES.length,
     scanned: crawl.scanned,
     matched: crawl.matches.length,
     added: result?.upsertedCount ?? 0,
+    autoAdded: auto.added,
     closed: closed.modifiedCount,
     failures: crawl.failures,
   };
@@ -147,13 +192,17 @@ export async function approveCandidates(ids: string[]) {
   const approved: { id: string; slug: string }[] = [];
   const failed: { id: string; error: string }[] = [];
 
-  for (const c of candidates) {
+  const queue = [...candidates];
+  async function worker() {
+    for (let c = queue.shift(); c; c = queue.shift()) await approveOne(c);
+  }
+  async function approveOne(c: IJobCandidate & { _id: unknown }) {
     const id = String(c._id);
     try {
       if (await SavedJob.exists({ $or: [{ link: c.applyUrl }, { applyUrl: c.applyUrl }] })) {
         await JobCandidate.updateOne({ _id: c._id }, { $set: { status: "rejected" } });
         failed.push({ id, error: "Already on Reblet" });
-        continue;
+        return;
       }
       let description = c.description;
       if (!description && c.ats === "smartrecruiters") {
@@ -183,6 +232,7 @@ export async function approveCandidates(ids: string[]) {
       failed.push({ id, error: err instanceof Error ? err.message : "Could not add the job" });
     }
   }
+  await Promise.all(Array.from({ length: Math.min(4, candidates.length) }, worker));
 
   if (approved.length) {
     revalidatePath("/jobs");

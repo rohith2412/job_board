@@ -42,6 +42,7 @@ export default function JobReview() {
   const [kind, setKind] = useState<Kind>("all");
   const [region, setRegion] = useState<Region>("all");
   const [message, setMessage] = useState("");
+  const [autoAdd, setAutoAdd] = useState<boolean | null>(null);
 
   async function load() {
     const res = await fetch("/api/admin/job-candidates", { cache: "no-store" });
@@ -49,6 +50,7 @@ export default function JobReview() {
       const data = await res.json();
       setItems(data.candidates);
       setStats({ approved: data.approved, rejected: data.rejected, lastCheckedAt: data.lastCheckedAt });
+      setAutoAdd(data.autoAdd?.enabled ?? null);
     } else {
       setMessage("Couldn't load roles. Try refreshing.");
     }
@@ -63,6 +65,7 @@ export default function JobReview() {
         if (cancelled) return;
         setItems(data.candidates);
         setStats({ approved: data.approved, rejected: data.rejected, lastCheckedAt: data.lastCheckedAt });
+        setAutoAdd(data.autoAdd?.enabled ?? null);
       })
       .catch(() => !cancelled && setMessage("Couldn't load roles. Try refreshing."))
       .finally(() => !cancelled && setLoading(false));
@@ -134,12 +137,32 @@ export default function JobReview() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setMessage(`Checked ${data.companies} companies. ${data.added} new role${data.added === 1 ? "" : "s"} to review.`);
+      setMessage(
+        `Checked ${data.companies} companies. ${data.added} new role${data.added === 1 ? "" : "s"} found` +
+          (data.autoAdded ? `, ${data.autoAdded} posted this week added to Reblet automatically.` : ".")
+      );
       await load();
     } catch (err) {
       setMessage(err instanceof Error && err.message ? err.message : "Check failed");
     }
     setBusy("");
+  }
+
+  async function toggleAutoAdd() {
+    const next = !autoAdd;
+    setAutoAdd(next);
+    try {
+      const res = await fetch("/api/admin/job-candidates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "auto-add", enabled: next }),
+      });
+      if (!res.ok) throw new Error();
+      setMessage(next ? "Roles posted in the last 7 days will be added automatically on each check." : "Auto-add is off. Every role waits for your review.");
+    } catch {
+      setAutoAdd(!next);
+      setMessage("Couldn't change auto-add");
+    }
   }
 
   const ids = shown.map((c) => c._id);
@@ -165,6 +188,25 @@ export default function JobReview() {
             {busy === "sync" ? "Checking..." : "Check now"}
           </button>
         </div>
+        {autoAdd !== null && (
+          <div className={`mt-3 flex items-start gap-3 rounded-xl p-3 ${autoAdd ? "bg-green-50" : "bg-gray-50"}`}>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900">Auto-add new roles {autoAdd ? "on" : "off"}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-gray-500">
+                Roles the company posted in the last 7 days go straight onto Reblet each morning. Older roles still wait here for review.
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={autoAdd}
+              aria-label="Auto-add new roles"
+              onClick={toggleAutoAdd}
+              className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${autoAdd ? "bg-green-600" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${autoAdd ? "left-[22px]" : "left-0.5"}`} />
+            </button>
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-gray-50 py-2">
             <p className="text-lg font-bold text-gray-900 tabular-nums">{items.length}</p>

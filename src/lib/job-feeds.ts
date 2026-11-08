@@ -130,7 +130,8 @@ async function readGreenhouse(src: FeedSource): Promise<FeedJob[]> {
     applyUrl: j.absolute_url,
     description: htmlToText(j.content ?? ""),
     salary: "",
-    postedAt: j.first_published ?? j.updated_at ?? null,
+    // updated_at changes on any edit, so only the first publish date says when a role is new.
+    postedAt: j.first_published ?? null,
   }));
 }
 
