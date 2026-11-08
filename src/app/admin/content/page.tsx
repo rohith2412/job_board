@@ -116,6 +116,8 @@ export default function ContentPage() {
   const [spotlightMsg, setSpotlightMsg] = useState("");
 
   const [view, setView] = useState<"queue" | "drafts" | "posted">("queue");
+  const [autopilot, setAutopilot] = useState({ enabled: false, saved: "" });
+  const [autopilotBusy, setAutopilotBusy] = useState(false);
   const [createTab, setCreateTab] = useState<"spotlights" | "roundup">("spotlights");
   const [now, setNow] = useState(0);
 
@@ -134,10 +136,15 @@ export default function ContentPage() {
     Promise.all([
       fetch("/api/admin/linkedin-posts").then((r) => r.ok ? r.json() : { posts: [] }),
       fetch("/api/admin/linkedin-accounts").then((r) => r.ok ? r.json() : { accounts: [] }),
+      fetch("/api/admin/linkedin-autopilot").then((r) => r.ok ? r.json() : null),
     ])
-      .then(([postsData, accountsData]) => {
+      .then(([postsData, accountsData, autopilotData]) => {
         setPosts(postsData.posts || []);
         setAccounts(accountsData.accounts || []);
+        if (autopilotData?.slots?.length) {
+          setSlotTimes(autopilotData.slots);
+          setAutopilot({ enabled: Boolean(autopilotData.enabled), saved: JSON.stringify(autopilotData.slots) });
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -254,6 +261,31 @@ export default function ContentPage() {
       setSpotlightMsg("Network error");
     }
     setSpotlightBusy("");
+  }
+
+  async function saveAutopilot(enabled: boolean) {
+    setAutopilotBusy(true);
+    setSpotlightMsg("");
+    try {
+      const res = await fetch("/api/admin/linkedin-autopilot", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled, slots: slotTimes, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAutopilot({ enabled: data.enabled, saved: JSON.stringify(data.slots) });
+      if (data.run?.scheduled) {
+        const fresh = await fetch("/api/admin/linkedin-posts").then((r) => (r.ok ? r.json() : null));
+        if (fresh?.posts) setPosts(fresh.posts);
+        setSpotlightMsg(`Autopilot is on. Scheduled ${data.run.scheduled} posts for the next two days.`);
+      } else {
+        setSpotlightMsg(enabled ? "Autopilot is on. The next two days are already filled." : "Autopilot is off. Nothing new will be scheduled.");
+      }
+    } catch (err) {
+      setSpotlightMsg(err instanceof Error && err.message ? err.message : "Couldn't save autopilot");
+    }
+    setAutopilotBusy(false);
   }
 
   async function scheduleSpotlights() {
@@ -656,6 +688,35 @@ export default function ContentPage() {
 
                 {createTab === "spotlights" ? (
                   <div className="flex flex-col gap-4 p-4">
+                    <div className={`flex items-start gap-3 rounded-xl p-3 ${autopilot.enabled ? "bg-green-50" : "bg-gray-50"}`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Autopilot {autopilot.enabled ? "on" : "off"}</p>
+                        <p className="mt-0.5 text-[11px] leading-relaxed text-gray-500">
+                          {autopilot.enabled
+                            ? "Every hour, empty slots in the next two days get a post drafted and scheduled. Edit or delete any of them in the queue before they go out."
+                            : "Turn on to keep the queue filled two days ahead with this plan, forever, without pressing Draft."}
+                        </p>
+                      </div>
+                      <button
+                        role="switch"
+                        aria-checked={autopilot.enabled}
+                        aria-label="Autopilot"
+                        disabled={autopilotBusy}
+                        onClick={() => saveAutopilot(!autopilot.enabled)}
+                        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer disabled:opacity-50 ${autopilot.enabled ? "bg-green-600" : "bg-gray-300"}`}
+                      >
+                        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${autopilot.enabled ? "left-[22px]" : "left-0.5"}`} />
+                      </button>
+                    </div>
+                    {autopilot.enabled && JSON.stringify(slotTimes) !== autopilot.saved && (
+                      <button
+                        onClick={() => saveAutopilot(true)}
+                        disabled={autopilotBusy}
+                        className="rounded-lg bg-gray-900 py-2 text-sm font-semibold text-white cursor-pointer disabled:opacity-50"
+                      >
+                        {autopilotBusy ? "Saving..." : "Save plan changes for autopilot"}
+                      </button>
+                    )}
                     <p className="text-xs leading-relaxed text-gray-500">
                       Pick a time and post type for each slot. Spotlights share one new job each, the roundup lists the week&apos;s new jobs, and
                       the rotating extra cycles through most viewed jobs, featured students and blog posts. Times are your local time.
