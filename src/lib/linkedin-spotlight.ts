@@ -18,6 +18,12 @@ type SpotlightJob = {
 
 export type SpotlightDraft = { slug: string; title: string; content: string };
 
+type Facts = { work: string; lookingFor: string; term: string; where: string };
+
+// Recruiter-speak that makes posts read as generated; any draft using these falls back to the job's own words.
+const FILLER =
+  /\b(dive|delve|kickstart|jump-?start|exciting|elevate|unlock|journey|cutting[- ]edge|dynamic|innovative|shape the future|thrive|passion(ate)?|hands-on|game[- ]changer|don'?t miss|dream (job|role)|key to success|essential|seize|embark|leverage|world of|look no further|opportunity awaits|join (a|an|the|us)\b)/i;
+
 // Rounds down to a tens bucket so the claim is always true ("97 jobs" -> "90+").
 export function jobCountLabel(count: number) {
   if (count < 10) return `${count}`;
@@ -46,21 +52,28 @@ function mentionsCompany(text: string, company: string) {
   return company.trim().length > 1 && text.toLowerCase().includes(company.trim().toLowerCase());
 }
 
-async function writeHook(job: SpotlightJob): Promise<{ hook: string; summary: string } | null> {
+function clean(value: unknown, max: number) {
+  const v = String(value ?? "").replace(/\s+/g, " ").trim().replace(/\.$/, "");
+  return v && v.length <= max && !/[#*_`]/.test(v) ? v : "";
+}
+
+async function extractFacts(job: SpotlightJob): Promise<Facts | null> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
-  const prompt = `Write a short LinkedIn spotlight for one job on Reblet, a job board for software engineering interns and new grads in Canada, the US and India.
+  const prompt = `Pull the concrete facts out of this job posting for a short, plain LinkedIn post. Write like an engineer telling a friend about a role: specific, flat, no selling.
 
 Role: ${job.title}
 Type: ${job.experienceType}
 Location: ${job.location}
-Details: ${job.snippet.slice(0, 1500)}
+Posting: ${job.snippet.slice(0, 2000)}
 
 Return JSON with:
-- "hook": one punchy opening line, starting with a single emoji that fits this specific role (vary it; avoid 🚀), at most 80 characters
-- "summary": one or two plain sentences, at most 220 characters, saying what the intern will actually work on and one key requirement or perk
+- "work": what the person will actually build or work on, naming the real systems, products or tech from the posting. Lowercase start, no leading verb like "you'll". At most 110 characters. Example: "LLVM-based compilers for CPUs and GPUs, mostly optimization passes and debugging"
+- "lookingFor": the 2–4 most specific requirements, comma-separated, as short noun phrases. At most 90 characters. Example: "C++, compiler or toolchain coursework, enrolled in a CS degree"
+- "where": the location as a reader would say it, city and state/province abbreviation plus Remote/Hybrid if stated, no street addresses or office codes. At most 60 characters. Example: "San Francisco, CA (hybrid)"
+- "term": start date, season or duration if the posting states one (e.g. "Summer 2027", "16 months from May 2027"), else ""
 
-Rules: never mention the company name ("${job.company}"); plain text only, no markdown, no hashtags, no links.`;
+Rules: only facts stated in the posting; never invent. No adjectives like exciting, dynamic, innovative, cutting-edge, hands-on. No emoji, hashtags, links or markdown. Never mention the company name ("${job.company}").`;
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -68,7 +81,8 @@ Rules: never mention the company name ("${job.company}"); plain text only, no ma
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        max_tokens: 300,
+        max_tokens: 250,
+        temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],
       }),
@@ -76,31 +90,39 @@ Rules: never mention the company name ("${job.company}"); plain text only, no ma
     if (!res.ok) return null;
     const data = await res.json();
     const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
-    const hook = String(parsed.hook ?? "").trim();
-    const summary = String(parsed.summary ?? "").trim();
-    if (!hook || !summary || hook.length > 100 || summary.length > 280) return null;
-    if (mentionsCompany(`${hook} ${summary}`, job.company)) return null;
-    return { hook, summary };
+    const facts = { work: clean(parsed.work, 130), lookingFor: clean(parsed.lookingFor, 110), term: clean(parsed.term, 40), where: clean(parsed.where, 70) };
+    if (!facts.work || !facts.lookingFor) return null;
+    const all = `${facts.work} ${facts.lookingFor} ${facts.term}`;
+    if (FILLER.test(all) || mentionsCompany(all, job.company)) return null;
+    return facts;
   } catch {
     return null;
   }
 }
 
-function buildPost(job: SpotlightJob, hook: string, summary: string, countLabel: string) {
+function lowerFirst(s: string) {
+  return /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s;
+}
+
+function buildPost(job: SpotlightJob, facts: Facts | null, countLabel: string) {
+  const details = facts
+    ? [
+        `What you'd work on: ${lowerFirst(facts.work)}.`,
+        `They're looking for: ${facts.lookingFor}.`,
+        ...(facts.term ? [`When: ${facts.term}`] : []),
+      ]
+    : [firstSentences(job.snippet, 260)];
   const lines = [
-    hook,
-    "",
     job.title,
-    `📍 ${job.location}`,
-    ...(job.salary ? [`💰 ${job.salary}`] : []),
+    `${facts?.where || job.location}${job.salary ? ` · ${job.salary}` : ""}`,
     "",
-    summary,
+    ...details,
     "",
-    `Apply on Reblet 👉 https://reblet.com/jobs/${job.slug}`,
+    `Apply: https://reblet.com/jobs/${job.slug}`,
     "",
-    `${countLabel} SWE internships and new grad jobs available → https://reblet.com/jobs`,
+    `${countLabel} more SWE internships and new grad jobs: https://reblet.com/jobs`,
     "",
-    [...roleTags(job), "#TechJobs", ...REGION_TAGS, "#Reblet"].join(" "),
+    [...roleTags(job), ...REGION_TAGS, "#Reblet"].join(" "),
   ];
   return lines.join("\n");
 }
@@ -121,10 +143,7 @@ export async function draftSpotlights(count: number): Promise<SpotlightDraft[]> 
   const countLabel = jobCountLabel(totalJobs);
   const drafts: SpotlightDraft[] = [];
   for (const job of jobs) {
-    const ai = await writeHook(job);
-    const hook = ai?.hook ?? `🚀 New ${job.experienceType.toLowerCase()} opening for students`;
-    const summary = ai?.summary ?? firstSentences(job.snippet, 220);
-    let content = buildPost(job, hook, summary, countLabel);
+    let content = buildPost(job, await extractFacts(job), countLabel);
     if (content.length > LINKEDIN_MAX_CHARS) content = content.slice(0, LINKEDIN_MAX_CHARS);
     drafts.push({ slug: job.slug, title: job.title, content });
   }
