@@ -87,7 +87,7 @@ export default function ContentPage() {
 
   const [slotTimes, setSlotTimes] = useState(["09:00", "13:00", "21:00"]);
   const [spotlightDays, setSpotlightDays] = useState(1);
-  const [spotlights, setSpotlights] = useState<{ slug: string; title: string; content: string; when: string }[]>([]);
+  const [spotlights, setSpotlights] = useState<{ kind: "single" | "roundup"; slugs: string[]; title: string; content: string; when: string }[]>([]);
   const [spotlightBusy, setSpotlightBusy] = useState<"" | "drafting" | "scheduling">("");
   const [spotlightMsg, setSpotlightMsg] = useState("");
 
@@ -192,13 +192,13 @@ export default function ContentPage() {
         setSpotlightMsg(data.error || "Could not draft posts");
       } else {
         setSpotlights(
-          (data.drafts as { slug: string; title: string; content: string }[]).map((d, i) => ({
+          (data.drafts as { kind: "single" | "roundup"; slugs: string[]; title: string; content: string }[]).map((d, i) => ({
             ...d,
             when: slots[i].toISOString(),
           }))
         );
         if (data.drafts.length < slots.length) {
-          setSpotlightMsg(`Only ${data.drafts.length} jobs haven't been posted yet, so ${data.drafts.length} slots are filled.`);
+          setSpotlightMsg(`Not enough unposted jobs left, so only ${data.drafts.length} of ${slots.length} slots are filled.`);
         }
       }
     } catch {
@@ -218,7 +218,7 @@ export default function ContentPage() {
         const res = await fetch("/api/admin/linkedin-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: s.content, profile: "personal1", status: "scheduled", scheduledFor: s.when, jobSlugs: [s.slug] }),
+          body: JSON.stringify({ content: s.content, profile: "personal1", status: "scheduled", scheduledFor: s.when, jobSlugs: s.slugs }),
         });
         const data = await res.json();
         if (res.ok) created.push(data.post);
@@ -516,7 +516,7 @@ export default function ContentPage() {
             <div>
               <h3 className="text-sm font-semibold text-gray-800">Daily job spotlights</h3>
               <p className="mt-1 text-xs text-gray-400">
-                One post per job, newest unposted jobs first. Times are your local time. Review the drafts, then schedule them.
+                Newest unposted jobs first, in a mix of post styles, with a roundup of several direct job links every few posts. Times are your local time. Review the drafts, then schedule them.
               </p>
             </div>
             <div className="flex flex-wrap items-end gap-3">
@@ -557,9 +557,12 @@ export default function ContentPage() {
             {spotlights.length > 0 && (
               <div className="flex flex-col gap-3">
                 {spotlights.map((s, i) => (
-                  <div key={s.slug} className="rounded-xl border border-gray-200 p-3 flex flex-col gap-2">
+                  <div key={s.slugs.join(",")} className="rounded-xl border border-gray-200 p-3 flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-amber-700">Posts {formatWhen(s.when)}</p>
+                      <p className="text-xs font-semibold text-amber-700">
+                        Posts {formatWhen(s.when)}
+                        {s.kind === "roundup" && <span className="ml-2 text-gray-500">· Roundup of {s.slugs.length} jobs</span>}
+                      </p>
                       <button
                         onClick={() => setSpotlights((prev) => prev.filter((_, j) => j !== i))}
                         className="text-xs text-gray-400 hover:text-red-500 cursor-pointer"
