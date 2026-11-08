@@ -531,13 +531,16 @@ export default function AnalyticsDashboard() {
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
-      {(!data.enhancedSince || +new Date(data.enhancedSince) > +new Date(data.generatedAt) - data.rangeDays * 86400000) && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Sessions, traffic sources, campaigns, time on page and Apply clicks are collected from{" "}
-          {data.enhancedSince ? when(data.enhancedSince) : "this release onward"}, for visitors who accept cookies. Earlier
-          days only have page views, locations and devices. Bots and your own visits are excluded everywhere.
+      <details className="group rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <summary className="cursor-pointer list-none font-semibold">
+          About this data <span className="font-normal text-amber-700">· real people only, bots and your visits excluded</span>
+        </summary>
+        <p className="mt-1.5 leading-relaxed">
+        Sessions, traffic sources, campaigns, time on page and Apply clicks are collected from{" "}
+        {data.enhancedSince ? when(data.enhancedSince) : "this release onward"}, for visitors who accept cookies. Earlier
+        days only have page views, locations and devices. Bots and your own visits are excluded everywhere, and new views only count once the visitor taps, moves the mouse or presses a key, so a page load alone isn&apos;t counted. Apply clicks only count when a person clicked.
         </p>
-      )}
+      </details>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -547,11 +550,11 @@ export default function AnalyticsDashboard() {
             disabled={!k.metric}
             onClick={() => k.metric && setMetric(k.metric)}
             title={k.hint}
-            className={`rounded-2xl border bg-white p-4 text-left transition-colors ${k.metric ? "cursor-pointer hover:border-gray-300" : "cursor-default"} ${k.metric === metric ? "border-gray-900 ring-1 ring-gray-900" : "border-gray-100"}`}
+            className={`rounded-2xl border bg-white p-3 text-left transition-colors sm:p-4 ${k.metric ? "cursor-pointer hover:border-gray-300" : "cursor-default"} ${k.metric === metric ? "border-gray-900 ring-1 ring-gray-900" : "border-gray-100"}`}
           >
             <p className="text-xs text-gray-500">{k.label}</p>
-            <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900 tabular-nums">{k.value}</p>
-            <div className="mt-1">{k.delta}</div>
+            <p className="mt-0.5 text-xl font-bold tracking-tight text-gray-900 tabular-nums sm:mt-1 sm:text-2xl">{k.value}</p>
+            <div className="mt-0.5 sm:mt-1">{k.delta}</div>
           </button>
         ))}
       </div>

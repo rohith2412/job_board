@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
       sessionId: cleanId(body.sessionId),
       userEmail: email || undefined,
       country: req.headers.get("x-vercel-ip-country") || undefined,
+      // Only clicks from real input count; a scripted click() arrives with human false.
+      human: body.human === true,
       ...(body.internal === true || (email && OWNER_EMAILS.includes(email)) ? { internal: true } : {}),
     });
     return NextResponse.json({ ok: true });

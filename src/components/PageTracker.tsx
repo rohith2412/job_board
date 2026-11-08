@@ -55,7 +55,16 @@ function sendBeacon(url: string, data: object) {
 export default function PageTracker() {
   const pathname = usePathname();
   const firstView = useRef(true);
-  const view = useRef<{ id?: string; visibleSince: number | null; total: number; sent: boolean } | null>(null);
+  const view = useRef<{ id?: string; visibleSince: number | null; total: number; sent: boolean; human: boolean } | null>(null);
+  // Set by the first real input in this tab (mouse, touch, key). Scripts can't fake trusted events.
+  const human = useRef(false);
+
+  function confirmHuman() {
+    const v = view.current;
+    if (!v || v.human || !v.id) return;
+    v.human = true;
+    sendBeacon("/api/track/engagement", { id: v.id, human: true });
+  }
 
   // Reports how long the current page was visible; the first report per page view is the one kept.
   function flush() {
@@ -82,6 +91,7 @@ export default function PageTracker() {
       visibleSince: document.visibilityState === "visible" ? Date.now() : null,
       total: 0,
       sent: false,
+      human: human.current,
     };
     view.current = current;
 
@@ -107,11 +117,17 @@ export default function PageTracker() {
         utmCampaign: params.get("utm_campaign") || undefined,
         language: navigator.language,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        human: human.current,
       }),
     })
       .then((r) => r.json())
       .then((data) => {
         if (data?.id) current.id = data.id;
+        // Input that happened while the view was being recorded still counts for it.
+        if (human.current && !current.human && current.id) {
+          current.human = true;
+          sendBeacon("/api/track/engagement", { id: current.id, human: true });
+        }
       })
       .catch(() => {});
   }, [pathname]);
@@ -128,6 +144,11 @@ export default function PageTracker() {
         v.visibleSince = Date.now();
       }
     }
+    function onInput(e: Event) {
+      if (!e.isTrusted) return;
+      human.current = true;
+      confirmHuman();
+    }
     function onClick(e: MouseEvent) {
       const link = (e.target as Element | null)?.closest?.("[data-apply-btn]");
       if (!link) return;
@@ -135,12 +156,16 @@ export default function PageTracker() {
         type: "apply_click",
         path: window.location.pathname,
         href: (link as HTMLAnchorElement).href,
+        human: e.isTrusted,
         ...identity(),
       });
     }
+    const inputs = ["pointerdown", "pointermove", "touchstart", "keydown", "wheel"] as const;
+    for (const type of inputs) window.addEventListener(type, onInput, { capture: true, passive: true });
     document.addEventListener("visibilitychange", onVisibility);
     document.addEventListener("click", onClick, true);
     return () => {
+      for (const type of inputs) window.removeEventListener(type, onInput, { capture: true });
       document.removeEventListener("visibilitychange", onVisibility);
       document.removeEventListener("click", onClick, true);
     };

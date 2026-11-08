@@ -25,6 +25,8 @@ export interface IVisit {
   durationMs?: number;
   // Visits by the site owner (any device that has opened /admin) are excluded from analytics.
   internal?: boolean;
+  // false until the page sees real input (tap, mouse, key); visits stored before this field existed have none.
+  human?: boolean;
   createdAt: Date;
 }
 
@@ -52,6 +54,7 @@ const VisitSchema = new Schema<IVisit>(
     timezone: { type: String },
     durationMs: { type: Number },
     internal: { type: Boolean },
+    human: { type: Boolean },
   },
   { timestamps: true }
 );

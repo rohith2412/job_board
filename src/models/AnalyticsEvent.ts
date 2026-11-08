@@ -12,6 +12,7 @@ export interface IAnalyticsEvent {
   userEmail?: string;
   country?: string;
   internal?: boolean;
+  human?: boolean;
   createdAt: Date;
 }
 
@@ -26,6 +27,7 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
     userEmail: { type: String },
     country: { type: String },
     internal: { type: Boolean },
+    human: { type: Boolean },
   },
   { timestamps: true }
 );

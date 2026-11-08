@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       utmCampaign: cleanText(body.utmCampaign, 120),
       language: cleanText(body.language, 20),
       timezone: cleanText(body.timezone, 60),
+      human: body.human === true,
       ...(body.internal === true || (email && OWNER_EMAILS.includes(email)) ? { internal: true } : {}),
       ...(email
         ? {

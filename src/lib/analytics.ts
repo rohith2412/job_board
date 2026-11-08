@@ -16,13 +16,15 @@ const LISTING_PAGES = new Set(["internships", "new-grad", "remote", "in"]);
 
 // Real traffic only: no owner devices, no owner account, and the legacy owner-location rule for old data.
 // Bots are re-checked here because older visits were stored before the bot filter caught them all.
+// Newer visits also need proof of a person (a tap, mouse movement or key press); human is false until then.
 export const REAL_VISITS = {
   internal: { $ne: true },
+  human: { $ne: false },
   userEmail: { $nin: OWNER_EMAILS },
   userAgent: { $not: BOT_PATTERNS },
   $nor: [{ createdAt: { $lt: LEGACY_CUTOFF }, city: /Sudbury/i, country: "CA" }],
 };
-const REAL_EVENTS = { internal: { $ne: true }, userEmail: { $nin: OWNER_EMAILS } };
+const REAL_EVENTS = { internal: { $ne: true }, human: { $ne: false }, userEmail: { $nin: OWNER_EMAILS } };
 
 type VisitRow = {
   path: string;
