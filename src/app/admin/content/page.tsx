@@ -84,7 +84,7 @@ export default function ContentPage() {
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
   const [loadingJobs, setLoadingJobs] = useState(false);
 
-  const [slotTimes, setSlotTimes] = useState(["09:00", "13:00", "21:00"]);
+  const [slotTimes, setSlotTimes] = useState(["08:00", "11:00", "14:00", "17:00", "20:00"]);
   const [spotlightDays, setSpotlightDays] = useState(1);
   const [spotlights, setSpotlights] = useState<{ slug: string; title: string; content: string; when: string }[]>([]);
   const [spotlightBusy, setSpotlightBusy] = useState<"" | "drafting" | "scheduling">("");

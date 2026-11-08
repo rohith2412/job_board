@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { draftSpotlights } from "@/lib/linkedin-spotlight";
 
 const ADMIN_EMAIL = "rohithra75@gmail.com";
-const MAX_DRAFTS = 9;
+const MAX_DRAFTS = 15;
 
 // Returns draft posts for review; scheduling happens separately through /api/admin/linkedin-posts.
 export async function POST(req: NextRequest) {
